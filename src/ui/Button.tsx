@@ -1,10 +1,11 @@
 import React from "react";
-import { Pressable, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from "react-native";
-import { tokens } from "../theme/tokens";
-import { Text } from "./primitives";
+import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import { colors } from "../theme/colors";
+import { metrics } from "../theme/metrics";
+import { Text } from "./Text";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
-type Size = "sm" | "md" | "lg";
+type Variant = "primary" | "secondary" | "tertiary";
+type Size = "md";
 
 export function Button({
                            title,
@@ -13,14 +14,19 @@ export function Button({
                            size = "md",
                            disabled,
                            loading,
-                       }: {
+                           leftIcon,
+                           rightIcon,
+                       }: Readonly<{
     title: string;
     onPress?: () => void;
     variant?: Variant;
     size?: Size;
     disabled?: boolean;
     loading?: boolean;
-}) {
+    leftIcon?: React.ReactNode;
+    rightIcon?: React.ReactNode;
+}>) {
+    // Даже если в Figma нет states, в коде полезно иметь disabled/loading
     const isDisabled = disabled || loading;
 
     return (
@@ -29,48 +35,68 @@ export function Button({
             disabled={isDisabled}
             style={({ pressed }) => [
                 styles.base,
-                variantStyle[variant],
-                sizeStyle[size],
+                sizeStyles[size],
+                variantStyles[variant],
                 isDisabled && styles.disabled,
                 pressed && !isDisabled && styles.pressed,
             ]}
         >
-            {loading ? (
-                <ActivityIndicator />
-            ) : (
-                <Text style={textStyle[variant]}>{title}</Text>
-            )}
+            <View style={styles.content}>
+                {leftIcon ? <View style={styles.iconLeft}>{leftIcon}</View> : null}
+
+                <Text variant="actionM" style={textStyles[variant]}>
+                    {loading ? "Loading..." : title}
+                </Text>
+
+                {rightIcon ? <View style={styles.iconRight}>{rightIcon}</View> : null}
+            </View>
         </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
     base: {
-        borderRadius: tokens.radius.md,
+        borderRadius: metrics.radius.md, // 12
         alignItems: "center",
         justifyContent: "center",
-        borderWidth: 1,
     } satisfies ViewStyle,
+
+    content: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    iconLeft: { marginRight: 8 },
+    iconRight: { marginLeft: 8 },
+
     disabled: { opacity: 0.5 },
     pressed: { opacity: 0.85 },
 });
 
-const sizeStyle = StyleSheet.create({
-    sm: { paddingVertical: tokens.space[2], paddingHorizontal: tokens.space[3] },
-    md: { paddingVertical: tokens.space[3], paddingHorizontal: tokens.space[4] },
-    lg: { paddingVertical: tokens.space[4], paddingHorizontal: tokens.space[5] },
+const sizeStyles = StyleSheet.create({
+    md: {
+        paddingHorizontal: metrics.space[4], // 16
+        paddingVertical: metrics.space[3], // 12
+    },
 } satisfies Record<Size, ViewStyle>);
 
-const variantStyle = StyleSheet.create({
-    primary: { backgroundColor: tokens.color.primary, borderColor: tokens.color.primary },
-    secondary: { backgroundColor: tokens.color.surface, borderColor: tokens.color.border },
-    ghost: { backgroundColor: "transparent", borderColor: "transparent" },
-    danger: { backgroundColor: tokens.color.danger, borderColor: tokens.color.danger },
+const variantStyles = StyleSheet.create({
+    primary: {
+        backgroundColor: colors.highlight.darkest,
+    },
+    secondary: {
+        backgroundColor: "transparent",
+        borderWidth: 2,
+        borderColor: colors.highlight.darkest,
+    },
+    tertiary: {
+        backgroundColor: "transparent",
+    },
 } satisfies Record<Variant, ViewStyle>);
 
-const textStyle = StyleSheet.create({
-    primary: { color: "#fff", fontWeight: tokens.font.weight.medium },
-    secondary: { color: tokens.color.text, fontWeight: tokens.font.weight.medium },
-    ghost: { color: tokens.color.text, fontWeight: tokens.font.weight.medium },
-    danger: { color: "#fff", fontWeight: tokens.font.weight.medium },
-} satisfies Record<Variant, TextStyle>);
+const textStyles = StyleSheet.create({
+    primary: { color: colors.neutralLight.lightest },
+    secondary: { color: colors.highlight.darkest },
+    tertiary: { color: colors.highlight.darkest },
+} as const);
