@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "neo-app",
-    "slug": "neo-app",
+    "name": "what-where-when",
+    "slug": "what-where-when",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "neoapp",
+    "scheme": "whatwherewhen",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
