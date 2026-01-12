@@ -6,6 +6,7 @@ import { TextField } from "@/src/ui/TextField";
 import { Button } from "@/src/ui/Button";
 import { Text } from "@/src/ui/Text";
 import { Checkbox } from "@/src/ui/Checkbox";
+import {hostApi} from "@/src/api/host";
 
 export default function SignupScreen() {
     const router = useRouter();
@@ -21,40 +22,38 @@ export default function SignupScreen() {
 
     return (
         <AuthShell>
-            <View style={{ width: 360, gap: 12 }}>
-                <View style={{ gap: 4, marginBottom: 8 }}>
+            <View style={{ width: 360, gap: 24 }}>
+                <View style={{ gap: 8 }}>
                     <Text variant="h3">Sign up</Text>
                     <Text variant="bodyS" style={{ color: "#71727A" }}>
                         Create an account to get started
                     </Text>
                 </View>
 
-                <Text variant="bodyS" style={{ fontWeight: "600" as any }}>Name</Text>
-                <TextField value={name} onChangeText={setName} placeholder="Name" />
+                <View style={{ gap: 16 }}>
+                    <TextField label={"Name"} value={name} onChangeText={setName} placeholder="Name" />
 
-                <Text variant="bodyS" style={{ fontWeight: "600" as any }}>Email Address</Text>
-                <TextField value={email} onChangeText={setEmail} placeholder="name@email.com" />
+                    <TextField label={"Email Address"} value={email} onChangeText={setEmail} placeholder="name@email.com" />
 
-                <Text variant="bodyS" style={{ fontWeight: "600" as any }}>Password</Text>
-                <TextField
-                    value={pw}
-                    onChangeText={setPw}
-                    placeholder="Create a password"
-                    secureTextEntry={!showPw}
-                    rightIcon={<Text variant="captionM">{showPw ? "🙈" : "👁️"}</Text>}
-                    onRightIconPress={() => setShowPw((s) => !s)}
-                />
+                    <TextField
+                        label={"Password"}
+                        value={pw}
+                        onChangeText={setPw}
+                        placeholder="Create a password"
+                        secureTextEntry={!showPw}
+                        onRightIconPress={() => setShowPw((s) => !s)}
+                    />
 
-                <TextField
-                    value={pw2}
-                    onChangeText={setPw2}
-                    placeholder="Confirm password"
-                    secureTextEntry={!showPw2}
-                    rightIcon={<Text variant="captionM">{showPw2 ? "🙈" : "👁️"}</Text>}
-                    onRightIconPress={() => setShowPw2((s) => !s)}
-                />
+                    <TextField
+                        value={pw2}
+                        onChangeText={setPw2}
+                        placeholder="Confirm password"
+                        secureTextEntry={!showPw2}
+                        onRightIconPress={() => setShowPw2((s) => !s)}
+                    />
+                </View>
 
-                <View style={{ flexDirection: "row", gap: 10, alignItems: "center", marginTop: 4 }}>
+                <View style={{ flexDirection: "row", gap: 10, alignItems: "center"}}>
                     <Checkbox checked={agree} onChange={setAgree} />
                     <Text variant="bodyS" style={{ color: "#71727A", flex: 1 }}>
                         I&apos;ve read and agree with the{" "}
@@ -73,14 +72,15 @@ export default function SignupScreen() {
                     </Text>
                 </View>
 
-                <View style={{ marginTop: 8 }}>
-                    <Button
-                        title="Login"
-                        variant="primary"
-                        disabled={!agree || !email || !pw || pw !== pw2}
-                        onPress={() => router.push("/setup")}
-                    />
-                </View>
+                <Button
+                    title="Login"
+                    variant="primary"
+                    disabled={!agree || !email || !pw || pw !== pw2}
+                    onPress={async () => {
+                        await hostApi.register({ email, password: pw });
+                        router.push("/setup")
+                    }}
+                />
             </View>
         </AuthShell>
     );

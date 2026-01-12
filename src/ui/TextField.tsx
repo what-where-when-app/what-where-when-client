@@ -5,6 +5,7 @@ import {
     StyleSheet,
     ViewStyle,
     TextStyle,
+    Platform,
 } from "react-native";
 import { colors } from "../theme/colors";
 import { metrics } from "../theme/metrics";
@@ -117,7 +118,7 @@ export function TextField({
 
 const styles = StyleSheet.create({
     label: {
-        marginBottom: 4,
+        marginBottom: 8,
         fontWeight: "600",
     } satisfies TextStyle,
 
@@ -134,6 +135,18 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14,
         color: colors.neutralDark.darkest,
+
+        borderWidth: 0,
+        backgroundColor: "transparent",
+        padding: 0,
+        margin: 0,
+
+        ...(Platform.OS === "web"
+            ? ({
+                outlineStyle: "none",
+                boxShadow: "none",
+            } as any)
+            : null),
     } satisfies TextStyle,
 
     unit: {

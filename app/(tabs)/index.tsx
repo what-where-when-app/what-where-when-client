@@ -1,10 +1,17 @@
-import React from "react";
+import React, {useState} from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import { Button } from "../../src/ui/Button";
 import { Text } from "../../src/ui/Text";
 import { colors } from "../../src/theme/colors";
+import {Feather} from "@expo/vector-icons";
+import {ListItem} from "@/src/ui/ListItem";
+import {NumberInput} from "@/src/ui/NumberInput";
+import {Icon} from "@/src/ui/Icon";
+import {Tag} from "@/src/ui/Tag";
 
 export default function Screen() {
+
+    const [v, setV] = useState(60);
   return (
       <SafeAreaView style={styles.root}>
         <Text variant="h2">Typography</Text>
@@ -26,6 +33,30 @@ export default function Screen() {
 
         <View style={{ height: 12 }} />
         <Button title="Disabled" variant="primary" disabled />
+        <Feather name="arrow-left" size={24} color="#006FFD" />
+
+          <NumberInput
+              title="Time to think (sec)"
+              value={v}
+              min={0}
+              max={999}
+              onChange={setV}
+          />
+
+          <ListItem
+              title="Title"
+              description="Description. Lorem ipsum dolor sit amet..."
+              left={<Icon name="edit" />}
+              right={<Icon name="chevron-right" />}
+          />
+
+          <ListItem
+              title="Title"
+              description="Description..."
+              left={<Icon name="edit" />}
+              right={<Tag text="9" variant="solid" />}
+          />
+
       </SafeAreaView>
   );
 }

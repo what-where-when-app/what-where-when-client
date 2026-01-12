@@ -16,29 +16,30 @@ export default function LoginScreen() {
 
     return (
         <AuthShell>
-            <View style={{ width: 360, gap: 12 }}>
-                <TextField
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="Email Address"
-                />
+            <View style={{ width: 360, gap: 24 }}>
+                <View style={{ gap: 16 }}>
+                    <TextField
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder="Email Address"
+                    />
 
-                <TextField
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Password"
-                    secureTextEntry={!showPw}
-                    rightIcon={<Text variant="captionM">{showPw ? "🙈" : "👁️"}</Text>}
-                    onRightIconPress={() => setShowPw((s) => !s)}
-                />
+                    <TextField
+                        value={password}
+                        onChangeText={setPassword}
+                        placeholder="Password"
+                        secureTextEntry={!showPw}
+                        onRightIconPress={() => setShowPw((s) => !s)}
+                    />
 
-                <Link href="/" style={{ marginTop: 4 }}>
-                    <Text variant="bodyS" style={{ color: "#006FFD" }}>
-                        Forgot password?
-                    </Text>
-                </Link>
+                    <Link href="/">
+                        <Text variant="bodyS" style={{ color: "#006FFD" }}>
+                            Forgot password?
+                        </Text>
+                    </Link>
+                </View>
 
-                <View style={{ marginTop: 8 }}>
+                <View style={{ gap: 16 }}>
                     <Button
                         title="Login"
                         variant="primary"
@@ -51,17 +52,17 @@ export default function LoginScreen() {
                             }
                         }}
                     />
-                </View>
 
-                <View style={{ alignItems: "center", marginTop: 8 }}>
-                    <Text variant="bodyS" style={{ color: "#71727A" }}>
-                        Not a member?{" "}
-                        <Link href="/signup">
-                            <Text variant="bodyS" style={{ color: "#006FFD" }}>
-                                Register now
-                            </Text>
-                        </Link>
-                    </Text>
+                    <View style={{ alignItems: "center" }}>
+                        <Text variant="bodyS" style={{ color: "#71727A" }}>
+                            Not a member?{" "}
+                            <Link href="/signup">
+                                <Text variant="bodyS" style={{ color: "#006FFD" }}>
+                                    Register now
+                                </Text>
+                            </Link>
+                        </Text>
+                    </View>
                 </View>
             </View>
         </AuthShell>
