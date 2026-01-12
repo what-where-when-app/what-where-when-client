@@ -1,29 +1,62 @@
-import React from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
-import { tokens } from "@/src/theme/tokens";
-import { Box, Text } from "@/src/ui/primitives";
-import { Button } from "@/src/ui/Button";
+import React, {useState} from "react";
+import { SafeAreaView, StyleSheet, View } from "react-native";
+import { Button } from "../../src/ui/Button";
+import { Text } from "../../src/ui/Text";
+import { colors } from "../../src/theme/colors";
+import {Feather} from "@expo/vector-icons";
+import {ListItem} from "@/src/ui/ListItem";
+import {NumberInput} from "@/src/ui/NumberInput";
+import {Icon} from "@/src/ui/Icon";
+import {Tag} from "@/src/ui/Tag";
 
 export default function Screen() {
+
+    const [v, setV] = useState(60);
   return (
       <SafeAreaView style={styles.root}>
-        <Box style={styles.card}>
-          <Text variant="title">Design System</Text>
-          <Text variant="muted">Один UI для web и native</Text>
-          <Text variant="caption">tokens + primitives + button</Text>
+        <Text variant="h2">Typography</Text>
+        <Text variant="bodyM" style={{ marginTop: 8 }}>Body M example</Text>
+        <Text variant="captionM" style={{ marginTop: 8 }}>Caption M example</Text>
 
-          <Box style={{ height: tokens.space[4] }} />
+        <View style={{ height: 24 }} />
 
-          <Button title="Primary" onPress={() => {}} />
-          <Box style={{ height: tokens.space[2] }} />
-          <Button title="Secondary" variant="secondary" onPress={() => {}} />
-          <Box style={{ height: tokens.space[2] }} />
-          <Button title="Danger" variant="danger" onPress={() => {}} />
-          <Box style={{ height: tokens.space[2] }} />
-          <Button title="Loading" loading />
-          <Box style={{ height: tokens.space[2] }} />
-          <Button title="Disabled" disabled />
-        </Box>
+        <Text variant="h2">Buttons</Text>
+
+        <View style={{ height: 12 }} />
+        <Button title="Button" variant="primary" />
+
+        <View style={{ height: 12 }} />
+        <Button title="Button" variant="secondary" />
+
+        <View style={{ height: 12 }} />
+        <Button title="Button" variant="tertiary" />
+
+        <View style={{ height: 12 }} />
+        <Button title="Disabled" variant="primary" disabled />
+        <Feather name="arrow-left" size={24} color="#006FFD" />
+
+          <NumberInput
+              title="Time to think (sec)"
+              value={v}
+              min={0}
+              max={999}
+              onChange={setV}
+          />
+
+          <ListItem
+              title="Title"
+              description="Description. Lorem ipsum dolor sit amet..."
+              left={<Icon name="edit" />}
+              right={<Icon name="chevron-right" />}
+          />
+
+          <ListItem
+              title="Title"
+              description="Description..."
+              left={<Icon name="edit" />}
+              right={<Tag text="9" variant="solid" />}
+          />
+
       </SafeAreaView>
   );
 }
@@ -31,15 +64,7 @@ export default function Screen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: tokens.color.bg,
-    padding: tokens.space[4],
-  },
-  card: {
-    backgroundColor: tokens.color.surface,
-    borderRadius: tokens.radius.lg,
-    padding: tokens.space[4],
-    borderWidth: 1,
-    borderColor: tokens.color.border,
-    gap: tokens.space[2],
+    padding: 16,
+    backgroundColor: colors.neutralLight.light,
   },
 });
