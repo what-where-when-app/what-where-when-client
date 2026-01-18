@@ -2,7 +2,7 @@ import React from "react";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 
-type IconName =
+export type IconName =
     | "arrow-left"
     | "edit"
     | "heart"

@@ -4,6 +4,8 @@ import { colors } from "../theme/colors";
 import { metrics } from "../theme/metrics";
 import { Text } from "./Text";
 
+type ListItemVariant = "default" | "highlight";
+
 type Props = {
     title: string;
     description?: string;
@@ -11,9 +13,12 @@ type Props = {
     left?: React.ReactNode;
     right?: React.ReactNode;
 
+    variant?: ListItemVariant;
+
     onPress?: () => void;
     style?: ViewStyle;
 };
+
 
 export function ListItem({
                              title,
@@ -22,20 +27,27 @@ export function ListItem({
                              right,
                              onPress,
                              style,
-                         }: Props) {
+                             variant = "default",
+                         }: Readonly<Props>) {
     const Root: any = onPress ? Pressable : View;
 
     return (
         <Root
             onPress={onPress}
-            style={[styles.root, style]}
+            style={[
+                styles.root,
+                variantStyles[variant],
+                style]}
         >
             {left ? <View style={styles.left}>{left}</View> : null}
 
             <View style={styles.mid}>
-                <Text variant="bodyS" style={styles.title}>{title}</Text>
+                <Text variant="bodyM" style={styles.title}>
+                    {title}
+                </Text>
+
                 {description ? (
-                    <Text variant="captionM" style={styles.desc}>
+                    <Text variant="bodyS" style={styles.desc}>
                         {description}
                     </Text>
                 ) : null}
@@ -46,18 +58,28 @@ export function ListItem({
     );
 }
 
+const variantStyles = StyleSheet.create({
+    default: {
+        backgroundColor: colors.neutralLight.lightest,
+    },
+    highlight: {
+        backgroundColor: colors.highlight.lightest,
+    },
+});
+
 const styles = StyleSheet.create({
     root: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 14,
+        paddingVertical: 16,
+        paddingHorizontal: 16,
         borderRadius: metrics.radius.lg,
         backgroundColor: colors.neutralLight.lightest,
+        gap: 16
     },
     left: { width: 34, alignItems: "center", justifyContent: "center" },
-    mid: { flex: 1, gap: 2 },
+    mid: { flex: 1, gap: 4 },
     right: { minWidth: 34, alignItems: "center", justifyContent: "center" },
-    title: { color: colors.neutralDark.darkest, fontWeight: "600" as any },
+    title: { color: colors.neutralDark.darkest},
     desc: { color: colors.neutralDark.light },
 });

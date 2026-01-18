@@ -26,7 +26,6 @@ export function Button({
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
 }>) {
-    // Даже если в Figma нет states, в коде полезно иметь disabled/loading
     const isDisabled = disabled || loading;
 
     return (

@@ -33,7 +33,7 @@ export function NumberInput({
                                 disabled = false,
                                 error = false,
                                 style,
-                            }: Props) {
+                            }: Readonly<Props>) {
     const canDec = !disabled && (min === undefined || value - step >= min);
     const canInc = !disabled && (max === undefined || value + step <= max);
 
@@ -65,7 +65,7 @@ export function NumberInput({
                     disabled={!canDec}
                     onPress={() => onChange(value - step)}
                 />
-                <Text variant="bodyL" style={{ color: valueColor, minWidth: 36, textAlign: "center" }}>
+                <Text variant="bodyM" style={{ color: valueColor, minWidth: 36, textAlign: "center" }}>
                     {value}
                 </Text>
                 <CircleButton
@@ -82,11 +82,11 @@ function CircleButton({
                           icon,
                           disabled,
                           onPress,
-                      }: {
+                      }: Readonly<{
     icon: "minus" | "plus";
     disabled: boolean;
     onPress: () => void;
-}) {
+}>) {
     return (
         <Pressable
             onPress={onPress}
@@ -97,7 +97,7 @@ function CircleButton({
             ]}
             hitSlop={10}
         >
-            <Icon name={icon} size={18} color={colors.highlight.darkest} />
+            <Icon name={icon} size={10} color={colors.highlight.darkest} />
         </Pressable>
     );
 }
@@ -111,10 +111,10 @@ const styles = StyleSheet.create({
     },
     left: { flex: 1, gap: 4 },
     title: { color: colors.neutralDark.darkest, fontWeight: "600" as any },
-    controls: { flexDirection: "row", alignItems: "center", gap: 10 },
+    controls: { flexDirection: "row", alignItems: "center", gap: 6 },
     circle: {
-        width: 34,
-        height: 34,
+        width: 24,
+        height: 24,
         borderRadius: 999,
         backgroundColor: colors.highlight.lightest,
         alignItems: "center",
