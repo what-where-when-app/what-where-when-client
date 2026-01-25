@@ -1,7 +1,7 @@
 import React from "react";
-import { Switch, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
 import { ListItem } from "./ListItem";
-import { colors } from "../theme/colors";
+import {Toggle} from "@/src/ui/Toggle";
 
 type Props = {
     title: string;
@@ -26,15 +26,11 @@ export function SwitchListItem({
             description={description}
             style={style}
             right={
-                <Switch
+                <Toggle
                     value={value}
                     onValueChange={onValueChange}
                     disabled={disabled}
-                    trackColor={{
-                        false: colors.neutralLight.medium,
-                        true: colors.highlight.darkest,
-                    }}
-                    thumbColor={colors.neutralLight.lightest}
+                    size="sm"
                 />
             }
         />

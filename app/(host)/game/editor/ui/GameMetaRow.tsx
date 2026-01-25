@@ -3,7 +3,13 @@ import {TextField} from "@/src/ui/TextField";
 import {ListItem} from "@/src/ui/ListItem";
 import {Icon} from "@/src/ui/Icon";
 
-export function GameMetaRow({ title, date_of_event, passcode, onChangeTitle, onChangeDate }: Props) {
+export function GameMetaRow({ title, date_of_event, passcode, onChangeTitle, onChangeDate }: {
+    title: string;
+    date_of_event: string;
+    passcode?: string | null;
+    onChangeTitle: (v: string) => void;
+    onChangeDate: (v: string) => void;
+}) {
     return (
         <View style={{ flexDirection: "row", gap: 60, alignItems: "flex-start", paddingHorizontal: 16 }}>
             <View style={{ flex: 1 }}>

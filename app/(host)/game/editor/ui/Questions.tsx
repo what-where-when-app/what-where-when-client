@@ -65,7 +65,7 @@ export function QuestionsSection({
                                     title={`${r.round_number}. ${r.name ? r.name : ""}`}
                                     description={`${(r.questions?.length ?? 0)} questions`}
                                     style={{
-                                        borderWidth: active ? 2 : 0,
+                                        borderWidth: 2,
                                         borderColor: active ? colors.highlight.darkest : "transparent",
                                         backgroundColor: colors.neutralLight.light,
                                     }}
@@ -96,7 +96,7 @@ export function QuestionsSection({
                                     title={`Question ${q.question_number}`}
                                     description={q.text ? q.text.slice(0, 40) : "No text yet"}
                                     style={{
-                                        borderWidth: active ? 2 : 0,
+                                        borderWidth: 2,
                                         borderColor: active ? colors.highlight.darkest : "transparent",
                                         backgroundColor: colors.neutralLight.light,
                                     }}
