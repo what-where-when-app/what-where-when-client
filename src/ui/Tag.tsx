@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
 import { colors } from "../theme/colors";
 import { Text } from "./Text";
+import {IconName} from "@/src/ui/Icon";
 
 type Variant = "light" | "solid";
 type Size = "md";
@@ -28,7 +29,7 @@ export function Tag({
             {leftIcon ? <View style={styles.iconLeft}>{leftIcon}</View> : null}
 
             {showText ? (
-                <Text variant="captionM" style={textStyles[variant]}>
+                <Text variant="captionM" style={{...textStyles[variant], paddingHorizontal: 4}}>
                     {text}
                 </Text>
             ) : null}
@@ -45,14 +46,15 @@ const styles = StyleSheet.create({
         borderRadius: 999, // pill
     },
 
-    iconLeft: { marginRight: 6 },
-    iconRight: { marginLeft: 6 },
+    iconLeft: { },
+    iconRight: { },
 });
 
 const sizeStyles = StyleSheet.create({
     md: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+        gap: 4
     },
 } as const);
 
