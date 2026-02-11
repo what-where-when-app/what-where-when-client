@@ -58,6 +58,7 @@ const styles = StyleSheet.create({
         borderRadius: metrics.radius.md, // 12
         alignItems: "center",
         justifyContent: "center",
+        minHeight: 48
     } satisfies ViewStyle,
 
     content: {

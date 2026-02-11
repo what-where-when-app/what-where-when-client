@@ -5,14 +5,14 @@ import {
     StyleSheet,
     ViewStyle,
     TextStyle,
-    Platform,
+    Platform, TextInputProps,
 } from "react-native";
 import { colors } from "../theme/colors";
 import { metrics } from "../theme/metrics";
 import { Text } from "./Text";
 
 
-type Props = {
+interface Props extends TextInputProps {
     label?: string;
     value: string;
     onChangeText: (text: string) => void;
@@ -43,6 +43,7 @@ export function TextField({
                               rightIcon,
                               secureTextEntry,
                               onRightIconPress,
+                              ...rest
                           }: Readonly<Props>) {
     const [focused, setFocused] = useState(false);
 
@@ -86,6 +87,7 @@ export function TextField({
                     onFocus={() => setFocused(true)}
                     onBlur={() => setFocused(false)}
                     secureTextEntry={secureTextEntry}
+                    {...rest}
                 />
 
                 {rightIcon ? (
@@ -129,6 +131,7 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         paddingHorizontal: metrics.space[4], // 16
         paddingVertical: metrics.space[3], // 12
+        minHeight: 48
     } satisfies ViewStyle,
 
     input: {
