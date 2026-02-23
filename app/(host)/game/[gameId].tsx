@@ -1,84 +1,77 @@
 import React from "react";
-import {ActivityIndicator, ScrollView, View} from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { NavBar } from "@/src/ui/NavBar";
 import { Icon } from "@/src/ui/Icon";
+import { Box } from "@/src/ui/Box";
 import { colors } from "@/src/theme/colors";
-import {useGameEditor} from "@/app/(host)/game/editor/state";
-import {GameMetaRow} from "@/app/(host)/game/editor/ui/GameMetaRow";
-import {SettingsSections} from "@/app/(host)/game/editor/ui/Settings";
-import {CategoriesSection} from "@/app/(host)/game/editor/ui/Categories";
-import {TeamsSection} from "@/app/(host)/game/editor/ui/Teams";
-import {QuestionsSection} from "@/app/(host)/game/editor/ui/Questions";
+
+import { useGameEditor } from "@/app/(host)/game/editor/state";
+import {ControlSidebar} from "@/app/(host)/game/editor/ui/ControlSidebar";
+import {EditorContent} from "@/app/(host)/game/editor/ui/EditorContent";
+import {useHostGame} from "@/app/(host)/game/hooks/useHostGame";
+import {AnswersDashboard} from "@/app/(host)/game/editor/ui/AnswersDashboard";
+import {GameStatuses} from "@/src/dto/common.dto";
 
 
-export default function GameSetupScreen() {
+export default function GameAdminScreen() {
     const router = useRouter();
     const { gameId } = useLocalSearchParams<{ gameId: string }>();
 
     const editor = useGameEditor(gameId);
+    const { gameState, answers, startGame, startQuestion, nextQuestion, judgeAnswer } = useHostGame(Number(gameId));
 
     if (editor.loading) {
         return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                <ActivityIndicator />
-            </View>
+            <Box style={styles.centered}>
+                <ActivityIndicator color={colors.neutralDark.dark} />
+            </Box>
         );
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: colors.neutralLight.lightest }}>
+        <Box style={styles.screen}>
             <NavBar
-                title="Game setup"
+                title="Conducting a Game"
                 leftIcon={<Icon name="arrow-left" />}
                 onLeftPress={() => router.back()}
                 rightText={editor.isNew ? "Create" : "Save"}
                 onRightPress={editor.primaryAction}
             />
 
-            <ScrollView style={{ padding: 24 }}>
-                <GameMetaRow
-                    title={editor.draft.title}
-                    date_of_event={editor.draft.date_of_event}
-                    passcode={editor.loaded?.passcode}
-                    onChangeTitle={editor.setTitle}
-                    onChangeDate={editor.setDate}
-                />
-
-                <SettingsSections
-                    settings={editor.draft.settings}
-                    onChange={(next) => editor.setDraft((d) => ({ ...d, settings: next }))}
-                />
-
-                <CategoriesSection
-                    categories={editor.draft.categories}
-                    onAdd={editor.addCategory}
-                    onRemove={editor.removeCategory}
-                />
-
-                <TeamsSection
-                    teams={editor.draft.teams}
-                    onAdd={editor.addTeam}
-                    onRemove={editor.removeTeam}
-                />
-
-                <QuestionsSection
-                    rounds={editor.rounds}
-                    selectedRound={editor.selectedRound}
-                    selectedQuestion={editor.selectedQuestion}
-                    selectedRoundKey={editor.selectedRoundKey}
-                    selectedQuestionKey={editor.selectedQuestionKey}
-                    onAddRound={editor.addRound}
-                    onRemoveRound={editor.removeRound}
-                    onSelectRound={editor.selectRound}
-                    onAddQuestion={editor.addQuestion}
-                    onRemoveQuestion={editor.removeQuestion}
-                    onSelectQuestion={editor.selectQuestion}
-                    onUpdateSelectedQuestion={editor.updateSelectedQuestion}
-                    onUpdateRoundName={editor.updateSelectedRoundName}
-                />
-            </ScrollView>
-        </View>
+            <Box style={styles.layout}>
+                {editor.isNew ? (
+                    <></>
+                ) : (
+                    <ControlSidebar
+                        isNew={editor.isNew}
+                        rounds={editor.rounds}
+                        onStartGame={startGame}
+                        onStartQuestion={startQuestion}
+                        onNextQuestion={nextQuestion}
+                        gameState={gameState}
+                        gameName={editor.loaded?.title}
+                    />
+                )}
+                <Box style={styles.mainContent}>
+                    {gameState.status === GameStatuses.LIVE && (
+                        <AnswersDashboard
+                            rounds={editor.rounds}
+                            answers={answers}
+                            onJudge={judgeAnswer}
+                        />
+                    )}
+                    <EditorContent editor={editor} />
+                </Box>
+            </Box>
+        </Box>
     );
 }
+
+const styles = StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.neutralLight.lightest },
+    centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+    layout: { flex: 1, flexDirection: 'row' },
+    mainContent: { flex: 1 },
+});

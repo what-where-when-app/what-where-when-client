@@ -97,3 +97,13 @@ export interface SaveGameRequest {
 export interface SaveGameResponse {
   game: HostGameDetails;
 }
+
+export interface AnswerDomain {
+  id: number;
+  questionId: number;
+  participantId: number;
+  teamName: string;
+  answerText: string;
+  status: string;
+  submittedAt: string;
+}

@@ -15,7 +15,7 @@ export function useGameEditor(gameIdParam: string) {
     const router = useRouter();
 
     const isNew = gameIdParam === "new";
-    const numericGameId = !isNew ? Number(gameIdParam) : null;
+    const numericGameId = isNew ? null : Number(gameIdParam);
 
     const [loading, setLoading] = useState(!isNew);
     const [loaded, setLoaded] = useState<HostGameDetails | null>(null);

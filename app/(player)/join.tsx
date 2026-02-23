@@ -3,7 +3,6 @@ import {
     StyleSheet,
     Alert,
     TextInput,
-    TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
     Keyboard
@@ -92,18 +91,9 @@ export default function JoinScreen() {
             >
                 <Box style={styles.content}>
 
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backButton}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                        <Text variant="h4" style={{ color: colors.neutralDark.darkest }}>
-                            ←
-                        </Text>
-                    </TouchableOpacity>
-
                     <Box style={styles.headerSpacer}>
-                        <Text variant="bodyM" style={styles.hintText}>Введите код игры</Text>
+                        <Text variant="h3">Enter game code</Text>
+                        <Text variant="bodyS">Ask it from organisation</Text>
                     </Box>
 
                     <Box style={styles.otpContainer}>
@@ -148,10 +138,12 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.neutralLight.lightest,
+        alignContent: 'center',
     },
     content: {
         flex: 1,
         padding: 24,
+        gap: 40
     },
     backButton: {
         marginTop: Platform.OS === 'android' ? 24 : 0,
@@ -161,28 +153,25 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     headerSpacer: {
-        marginBottom: 32,
         alignItems: 'center',
+        gap: 8
     },
     hintText: {
         color: colors.neutralDark.light,
     },
     otpContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 12,
-        marginBottom: 24,
+        justifyContent: 'center',
+        gap: 8,
     },
     otpInput: {
-        width: 64,
-        height: 64,
+        width: 48,
+        height: 48,
         borderRadius: metrics.radius.md,
         borderWidth: 2,
         borderColor: colors.neutralLight.dark,
         backgroundColor: colors.neutralLight.lightest,
         textAlign: 'center',
-        fontSize: 24,
-        fontWeight: 'bold',
         color: colors.neutralDark.darkest,
     },
     otpInputFilled: {
