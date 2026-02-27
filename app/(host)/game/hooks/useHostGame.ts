@@ -8,7 +8,7 @@ import {
     GameStatus,
     GameStatuses
 } from "@/src/dto/common.dto";
-import {AnswerDomain} from "@/src/dto/game.dto";
+import { AnswerDomain } from "@/src/dto/game.dto";
 
 export function useHostGame(gameId: number) {
     const socket = useSocket('game');
@@ -80,5 +80,22 @@ export function useHostGame(gameId: number) {
         socket?.emit(AdminRequestEvent.NextQuestion, { gameId });
     }, [socket, gameId]);
 
-    return { gameState, answers, startGame, startQuestion, nextQuestion, judgeAnswer };
+    const startTimer = useCallback(() => {
+        socket?.emit(AdminRequestEvent.ResumeTimer, { gameId });
+    }, [socket, gameId]);
+
+    const stopTimer = useCallback(() => {
+        socket?.emit(AdminRequestEvent.PauseTimer, { gameId });
+    }, [socket, gameId]);
+
+    return {
+        gameState,
+        answers,
+        startGame,
+        startQuestion,
+        nextQuestion,
+        startTimer,
+        stopTimer,
+        judgeAnswer
+    };
 }

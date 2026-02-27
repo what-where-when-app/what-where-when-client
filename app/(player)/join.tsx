@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import {
-    StyleSheet,
-    Alert,
     TextInput,
     KeyboardAvoidingView,
     Platform,
-    Keyboard
+    Keyboard,
+    StyleSheet,
+    TouchableWithoutFeedback,
+    View,
+    useWindowDimensions
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Box } from '@/src/ui/Box';
@@ -13,15 +15,17 @@ import { Text } from '@/src/ui/Text';
 import { Button } from '@/src/ui/Button';
 import { checkGameByCode } from '@/src/api/player';
 import { colors } from '@/src/theme/colors';
-import { metrics } from '@/src/theme/metrics';
 
 type InputRef = TextInput | null;
 
 export default function JoinScreen() {
     const [digits, setDigits] = useState<string[]>(['', '', '', '']);
+    const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const { height } = useWindowDimensions();
 
+    const router = useRouter();
     const inputRefs = useRef<InputRef[]>([]);
 
     const handleJoin = async () => {
@@ -29,30 +33,36 @@ export default function JoinScreen() {
         if (code.length < 4) return;
 
         setLoading(true);
+        setErrorMessage(null);
         Keyboard.dismiss();
 
         try {
             const gameData = await checkGameByCode(code);
             router.push({
                 pathname: '/(player)/select-team',
-                params: { gameData: JSON.stringify(gameData) }
+                params: { gameData: JSON.stringify(gameData), code }
             });
         } catch (e: any) {
-            Alert.alert('Ошибка', e.message || 'Игра не найдена');
+            setErrorMessage(e.message || 'Игра не найдена. Проверьте код.');
             setDigits(['', '', '', '']);
-            inputRefs.current[0]?.focus();
+            setFocusedIndex(null);
+            Keyboard.dismiss();
         } finally {
             setLoading(false);
         }
     };
 
     const handleChangeText = (text: string, index: number) => {
+        if (errorMessage) setErrorMessage(null);
+
         if (text.length > 1) {
             const newDigits = text.slice(0, 4).split('');
             setDigits(newDigits);
             if (newDigits.length === 4) {
-                inputRefs.current[3]?.focus();
-                Keyboard.dismiss();
+                setTimeout(() => {
+                    inputRefs.current[3]?.focus();
+                    Keyboard.dismiss();
+                }, 10);
             }
             return;
         }
@@ -61,125 +71,122 @@ export default function JoinScreen() {
         newDigits[index] = text;
         setDigits(newDigits);
 
-        if (text && index < 3) {
-            inputRefs.current[index + 1]?.focus();
-        }
-
-        if (index === 3 && text) {
-            Keyboard.dismiss();
+        if (text !== '' && index < 3) {
+            setTimeout(() => {
+                inputRefs.current[index + 1]?.focus();
+            }, 10);
         }
     };
 
-    const handleKeyPress = (e: any, index: number) => {
-        if (e.nativeEvent.key === 'Backspace') {
-            if (!digits[index] && index > 0) {
-                inputRefs.current[index - 1]?.focus();
-                const newDigits = [...digits];
-                newDigits[index - 1] = '';
-                setDigits(newDigits);
-            }
-        }
-    };
-
-    return (
-        <Box style={styles.container}>
-            <Stack.Screen options={{ headerShown: false }} />
-
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
-            >
-                <Box style={styles.content}>
-
-                    <Box style={styles.headerSpacer}>
-                        <Text variant="h3">Enter game code</Text>
-                        <Text variant="bodyS">Ask it from organisation</Text>
+    const content = (
+        <View style={{ flex: 1 }}>
+            {/* 1. ВЕРХНЯЯ ЧАСТЬ */}
+            <Box flex={1} align="center" p={6} style={{ paddingTop: height * 0.2 }}>
+                <Box maxWidth={450} width="100%" align="center">
+                    <Box align="center" gap={2} mb={8}>
+                        <Text variant="h1">Введите код игры</Text>
+                        <Text variant="bodyM" style={{ color: colors.neutralDark.light, textAlign: 'center' }}>
+                            Спросите четырехзначный код у организатора
+                        </Text>
                     </Box>
 
-                    <Box style={styles.otpContainer}>
+                    <Box row gap={2} justify="center" mb={4}>
                         {digits.map((digit, index) => (
                             <TextInput
                                 key={index}
                                 ref={(ref) => { inputRefs.current[index] = ref; }}
                                 style={[
                                     styles.otpInput,
-                                    digit ? styles.otpInputFilled : null
+                                    (focusedIndex === index || digit) && styles.otpInputActive,
+                                    errorMessage ? styles.otpInputError : null
                                 ]}
                                 value={digit}
+                                onFocus={() => setFocusedIndex(index)}
+                                onBlur={() => setFocusedIndex(null)}
                                 onChangeText={(text) => handleChangeText(text, index)}
-                                onKeyPress={(e) => handleKeyPress(e, index)}
+                                onKeyPress={(e) => {
+                                    // Добавляем setTimeout и для Backspace
+                                    if (e.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
+                                        const newDigits = [...digits];
+                                        newDigits[index - 1] = '';
+                                        setDigits(newDigits);
+                                        setTimeout(() => {
+                                            inputRefs.current[index - 1]?.focus();
+                                        }, 10);
+                                    }
+                                }}
                                 keyboardType="number-pad"
-                                maxLength={4}
-                                selectTextOnFocus
-                                caretHidden={false}
+                                maxLength={1}
+                                placeholder="0"
+                                placeholderTextColor={colors.neutralLight.dark}
                             />
                         ))}
                     </Box>
 
-                    <Box style={{ flex: 1 }} />
-
-                    <Box style={styles.buttonContainer}>
-                        <Button
-                            title={loading ? "Поиск..." : "Далее"}
-                            onPress={handleJoin}
-                            disabled={loading || digits.join('').length < 4}
-                            variant="primary"
-                            size="md"
-                        />
+                    {/* Блок ошибки */}
+                    <Box height={20} justify="center">
+                        {errorMessage && (
+                            <Text variant="bodyS" style={{ color: colors.error.dark, fontWeight: '600' }}>
+                                {errorMessage}
+                            </Text>
+                        )}
                     </Box>
-
                 </Box>
-            </KeyboardAvoidingView>
-        </Box>
+            </Box>
+
+            {/* 2. НИЖНЯЯ ЧАСТЬ */}
+            <Box p={6} gap={3} width="100%" maxWidth={450} style={{ alignSelf: 'center' }}>
+                <Button
+                    title={loading ? "Поиск..." : "Продолжить"}
+                    onPress={handleJoin}
+                    disabled={loading || digits.join('').length < 4}
+                    variant="primary"
+                />
+                <Button
+                    title="Назад"
+                    onPress={() => router.back()}
+                    variant="tertiary"
+                />
+            </Box>
+        </View>
+    );
+
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1, backgroundColor: colors.neutralLight.lightest }}
+        >
+            <Stack.Screen options={{ headerShown: false }} />
+
+            {Platform.OS === 'web' ? (
+                content
+            ) : (
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    {content}
+                </TouchableWithoutFeedback>
+            )}
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.neutralLight.lightest,
-        alignContent: 'center',
-    },
-    content: {
-        flex: 1,
-        padding: 24,
-        gap: 40
-    },
-    backButton: {
-        marginTop: Platform.OS === 'android' ? 24 : 0,
-        marginBottom: 24,
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-    },
-    headerSpacer: {
-        alignItems: 'center',
-        gap: 8
-    },
-    hintText: {
-        color: colors.neutralDark.light,
-    },
-    otpContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 8,
-    },
     otpInput: {
-        width: 48,
-        height: 48,
-        borderRadius: metrics.radius.md,
+        width: 52,
+        height: 64,
+        borderRadius: 16,
         borderWidth: 2,
         borderColor: colors.neutralLight.dark,
         backgroundColor: colors.neutralLight.lightest,
         textAlign: 'center',
+        fontSize: 32,
+        fontFamily: 'InterBold',
         color: colors.neutralDark.darkest,
+        ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
     },
-    otpInputFilled: {
+    otpInputActive: {
         borderColor: colors.highlight.darkest,
-        backgroundColor: colors.neutralLight.lightest,
     },
-    buttonContainer: {
-        justifyContent: 'flex-end',
-        paddingBottom: Platform.OS === 'android' ? 12 : 0,
+    otpInputError: {
+        borderColor: colors.error.light,
     }
 });

@@ -8,11 +8,11 @@ import { Box } from "@/src/ui/Box";
 import { colors } from "@/src/theme/colors";
 
 import { useGameEditor } from "@/app/(host)/game/editor/state";
-import {ControlSidebar} from "@/app/(host)/game/editor/ui/ControlSidebar";
-import {EditorContent} from "@/app/(host)/game/editor/ui/EditorContent";
-import {useHostGame} from "@/app/(host)/game/hooks/useHostGame";
-import {AnswersDashboard} from "@/app/(host)/game/editor/ui/AnswersDashboard";
-import {GameStatuses} from "@/src/dto/common.dto";
+import { ControlSidebar } from "@/app/(host)/game/editor/ui/ControlSidebar";
+import { EditorContent } from "@/app/(host)/game/editor/ui/EditorContent";
+import { useHostGame } from "@/app/(host)/game/hooks/useHostGame";
+import { AnswersDashboard } from "@/app/(host)/game/editor/ui/AnswersDashboard";
+import { GameStatuses } from "@/src/dto/common.dto";
 
 
 export default function GameAdminScreen() {
@@ -20,7 +20,32 @@ export default function GameAdminScreen() {
     const { gameId } = useLocalSearchParams<{ gameId: string }>();
 
     const editor = useGameEditor(gameId);
-    const { gameState, answers, startGame, startQuestion, nextQuestion, judgeAnswer } = useHostGame(Number(gameId));
+
+    const {
+        gameState,
+        answers,
+        startGame,
+        startQuestion,
+        nextQuestion,
+        startTimer,
+        stopTimer,
+        judgeAnswer
+    } = useHostGame(Number(gameId));
+
+    const handlePrevQuestion = () => {
+        if (!gameState.activeQuestionId) return;
+
+        const allQuestions = editor.rounds.flatMap(r => r.questions);
+
+        const currentIndex = allQuestions.findIndex(q => q.id === gameState.activeQuestionId);
+
+        if (currentIndex > 0) {
+            const prevId = allQuestions[currentIndex - 1].id;
+            if (prevId !== undefined) {
+                startQuestion(prevId);
+            }
+        }
+    };
 
     if (editor.loading) {
         return (
@@ -50,6 +75,9 @@ export default function GameAdminScreen() {
                         onStartGame={startGame}
                         onStartQuestion={startQuestion}
                         onNextQuestion={nextQuestion}
+                        onPrevQuestion={handlePrevQuestion}
+                        onStartTimer={startTimer}
+                        onStopTimer={stopTimer}
                         gameState={gameState}
                         gameName={editor.loaded?.title}
                     />

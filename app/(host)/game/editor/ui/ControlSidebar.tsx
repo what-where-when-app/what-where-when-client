@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { Button } from '@/src/ui/Button';
 import { colors } from '@/src/theme/colors';
 import { UIRound } from '@/app/(host)/game/editor/types';
-import {GamePhase, GameStatus, GameStatuses} from "@/src/dto/common.dto";
-import {ListItem} from "@/src/ui/ListItem";
+import { GamePhase, GameStatus, GameStatuses } from "@/src/dto/common.dto";
+import { ListItem } from "@/src/ui/ListItem";
 
 interface ControlSidebarProps {
     isNew: boolean;
@@ -21,10 +21,28 @@ interface ControlSidebarProps {
     onStartGame: () => void;
     onStartQuestion: (id: number) => void;
     onNextQuestion: () => void;
+    onPrevQuestion: () => void;
+    onStartTimer: () => void;
+    onStopTimer: () => void;
 }
 
-export const ControlSidebar = ({ isNew, rounds, gameName, gameState, onStartGame, onStartQuestion, onNextQuestion }: ControlSidebarProps) => {
-    const currentQuestionNumber = rounds.flatMap(r => r.questions).find(q => q.id === gameState.activeQuestionId)?.question_number;
+export const ControlSidebar = ({
+                                   isNew,
+                                   rounds,
+                                   gameName,
+                                   gameState,
+                                   onStartGame,
+                                   onStartQuestion,
+                                   onNextQuestion,
+                                   onPrevQuestion,
+                                   onStartTimer,
+                                   onStopTimer
+                               }: ControlSidebarProps) => {
+
+    const currentQuestionNumber = rounds
+        .flatMap(r => r.questions)
+        .find(q => q.id === gameState.activeQuestionId)?.question_number;
+
     const getStatusTagProps = () => {
         switch (gameState.status) {
             case GameStatuses.LIVE:
@@ -42,17 +60,15 @@ export const ControlSidebar = ({ isNew, rounds, gameName, gameState, onStartGame
 
     return (
         <Box style={styles.sidebar}>
-            <Box style={styles.statusSection}>
-                <Text variant="h1">{gameName}</Text>
-                <ListItem
-                    title={statusTag.label}
-                    style={{
-                        backgroundColor: statusTag.color,
-                    }}
-                />
-            </Box>
             <Box style={styles.section}>
-                {/* Таймер */}
+                <Box style={styles.statusSection}>
+                    <Text variant="h1">{gameName}</Text>
+                    <ListItem
+                        title={statusTag.label}
+                        style={{ backgroundColor: statusTag.color }}
+                    />
+                </Box>
+
                 <Box style={styles.section}>
                     <Text variant="captionM" style={styles.label}>Таймер</Text>
                     <Box style={[styles.statusCard, isRunning && styles.statusCardActive]}>
@@ -68,34 +84,73 @@ export const ControlSidebar = ({ isNew, rounds, gameName, gameState, onStartGame
                         <Text variant="captionM" style={styles.phaseText}>
                             {isRunning ? gameState.phase.toUpperCase() : 'ГОТОВ'}
                         </Text>
-                        <Text variant="captionM" style={styles.phaseText}>
-                            {currentQuestionNumber}
-                        </Text>
+                        {currentQuestionNumber && (
+                            <Text variant="captionM" style={styles.phaseText}>
+                                Вопрос {currentQuestionNumber}
+                            </Text>
+                        )}
                     </Box>
+
+                    {isLive && (
+                        <Box row gap={8}>
+                            <Box flex={1}>
+                                <Button title="Старт" onPress={onStartTimer} variant="primary" />
+                            </Box>
+                            <Box flex={1}>
+                                <Button title="Стоп" onPress={onStopTimer} variant="secondary" />
+                            </Box>
+                        </Box>
+                    )}
                 </Box>
-                {/* Кнопка старта игры (если еще не LIVE) */}
+            </Box>
+
+            {isLive && (
+                <ScrollView style={styles.roundsContainer} showsVerticalScrollIndicator={false}>
+                    {rounds.map(round => (
+                        <Box key={round.id} style={styles.roundWrapper}>
+                            <Text variant="bodyS" style={styles.roundTitle}>{round.name}</Text>
+                            {round.questions.map(q => {
+                                if (q.id === undefined) return null;
+
+                                const isActive = gameState.activeQuestionId === q.id;
+                                return (
+                                    <Box key={q.id} style={styles.questionBtn}>
+                                        <Button
+                                            title={`Вопрос ${q.question_number}`}
+                                            onPress={() => onStartQuestion(q.id as number)}
+                                            variant={isActive ? 'primary' : 'tertiary'}
+                                        />
+                                    </Box>
+                                );
+                            })}
+                        </Box>
+                    ))}
+                </ScrollView>
+            )}
+
+            <Box style={styles.section}>
                 {!isLive && !isNew && (
-                    <Button
-                        title="Start game"
-                        onPress={onStartGame}
-                        variant="primary"
-                    />
+                    <Button title="Start game" onPress={onStartGame} variant="primary" />
                 )}
 
-                {/* Кнопка Next Question (появляется, когда игра LIVE) */}
                 {isLive && (
-                    <Button
-                        title={gameState.activeQuestionId ? "Next question" : "Start first question"}
-                        onPress={onNextQuestion}
-                        variant="primary"
-                    />
-                )}
-
-                {/* Если вопросы закончились */}
-                {isLive && !isRunning && (
-                    <Text variant="bodyS" style={{ textAlign: 'center', color: colors.neutralDark.light }}>
-                        Все вопросы отыграны
-                    </Text>
+                    <Box row gap={8}>
+                        <Box flex={1}>
+                            <Button
+                                title="< Пред"
+                                onPress={onPrevQuestion}
+                                variant="secondary"
+                                disabled={!gameState.activeQuestionId}
+                            />
+                        </Box>
+                        <Box flex={1}>
+                            <Button
+                                title="След >"
+                                onPress={onNextQuestion}
+                                variant="primary"
+                            />
+                        </Box>
+                    </Box>
                 )}
             </Box>
         </Box>
@@ -103,17 +158,15 @@ export const ControlSidebar = ({ isNew, rounds, gameName, gameState, onStartGame
 };
 
 const styles = StyleSheet.create({
-    statusSection: {
-        gap: 10
-    },
     sidebar: {
-        width: 260,
+        width: 300,
         borderRightWidth: 1,
         borderRightColor: colors.neutralLight.light,
         backgroundColor: colors.neutralLight.lightest,
         padding: 16,
         justifyContent: 'space-between',
     },
+    statusSection: { gap: 10, marginBottom: 16 },
     section: { gap: 12 },
     label: {
         color: colors.neutralDark.light,
@@ -134,7 +187,17 @@ const styles = StyleSheet.create({
     },
     timer: { fontSize: 48, fontWeight: '700' },
     phaseText: { marginTop: 4, color: colors.neutralDark.dark },
+
+    roundsContainer: {
+        flex: 1,
+        marginTop: 16,
+        marginBottom: 16,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: colors.neutralLight.medium,
+        paddingVertical: 8,
+    },
     roundWrapper: { marginBottom: 16 },
     roundTitle: { fontWeight: '700', marginBottom: 6, color: colors.neutralDark.light },
-    questionBtn: { marginTop: 6, justifyContent: 'flex-start' },
+    questionBtn: { marginBottom: 6 },
 });
