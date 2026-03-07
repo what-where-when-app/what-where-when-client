@@ -6,7 +6,7 @@ import { ListItem } from "@/src/ui/ListItem";
 import { Tag } from "@/src/ui/Tag";
 import { Icon } from "@/src/ui/Icon";
 import { colors } from "@/src/theme/colors";
-import {UICategory} from "@/app/(host)/game/editor/types";
+import {UICategory} from "@/src/host/game/editor/types";
 import {Button} from "@/src/ui/Button";
 
 export function CategoriesSection({

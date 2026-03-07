@@ -17,64 +17,65 @@ export type GameStatus = (typeof GameStatuses)[keyof typeof GameStatuses];
 
 export enum GamePhase {
   IDLE = 'IDLE',
+  PREPARATION = 'PREPARATION',
   THINKING = 'THINKING',
   ANSWERING = 'ANSWERING',
 }
 
 export interface ApiError {
   code:
-    | 'VALIDATION_ERROR'
-    | 'UNAUTHORIZED'
-    | 'FORBIDDEN'
-    | 'NOT_FOUND'
-    | 'CONFLICT'
-    | 'RATE_LIMITED'
-    | 'INTERNAL_ERROR';
+      | 'VALIDATION_ERROR'
+      | 'UNAUTHORIZED'
+      | 'FORBIDDEN'
+      | 'NOT_FOUND'
+      | 'CONFLICT'
+      | 'RATE_LIMITED'
+      | 'INTERNAL_ERROR';
   message: string;
   details?: Record<string, unknown>;
 }
 
 export type ApiResponse<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: ApiError };
+    | { ok: true; data: T }
+    | { ok: false; error: ApiError };
 
 
-/**
- * Events sent from the Host/Admin to the Server
- */
 export enum AdminRequestEvent {
   Sync = 'admin:sync', // Initial synchronization: joins admin room and fetches all game data
   StartGame = 'admin:start_game', // Transitions game status from DRAFT to LIVE
-  StartQuestion = 'admin:start_question', // Triggers the start of a specific question cycle
+  PrepareQuestion = 'admin:prepare_question', // Triggers preparation state of the question (PREPARATION phase)
+  NextQuestion = 'admin:next_question', // Triggers PrepareQuestion under the hood (PREPARATION phase)
+  StartQuestion = 'admin:start_question', // Triggers the start of a specific question cycle (THINKING phase, timer start)
+  StopQuestion = 'admin:stop_question', // Stops ANSWERING phase (IDLE phase)
   JudgeAnswer = 'admin:judge_answer', // Submits host's verdict (correct/wrong) for a team's answer
   AdjustTime = 'admin:adjust_time', // Adds or subtracts seconds from the current active timer
   PauseTimer = 'admin:pause_timer', // Pauses the current question timer
   ResumeTimer = 'admin:resume_timer', // Resumes the current question timer
-  NextQuestion = 'admin:next_question'
+  FinishGame = 'admin:finish_game' // Transitions game status from LIVE to FINISHED
 }
 
 /**
  * Events sent from the Server specifically to Admins
  */
 export enum AdminResponseEvent {
-  AnswerUpdate = 'admin:answer_update', // Pushes a single AnswerDomain object when a team submits or host judges
-  NewDispute = 'admin:new_dispute', // Notifies admins about a team raising a dispute
+  AnswerUpdate = 'admin:answer_update',
+  NewDispute = 'admin:new_dispute',
 }
 
 /**
  * Events sent from the Player to the Server
  */
 export enum PlayerRequestEvent {
-  JoinGame = 'join_game', // Initial request to join the public game room
-  SubmitAnswer = 'player:submit_answer', // Sends the team's answer text to the server
-  Dispute = 'player:dispute', // Team challenges a host's verdict
+  JoinGame = 'join_game',
+  SubmitAnswer = 'player:submit_answer',
+  Dispute = 'player:dispute',
 }
 
 /**
  * Events sent from the Server specifically to a Player
  */
 export enum PlayerResponseEvent {
-  AnswerReceived = 'answer_received',   // Confirmation that the team's answer was successfully saved
+  AnswerReceived = 'answer_received',
 }
 
 /**

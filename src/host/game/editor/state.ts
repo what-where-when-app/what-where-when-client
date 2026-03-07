@@ -9,7 +9,7 @@ import { roundKey, questionKey } from "./keys";
 import {hostApi} from "@/src/api/host";
 import {toSaveGameDraft} from "@/src/game/mappers";
 import {tmpId} from "@/src/utils/tmpId";
-import {UICategory, UIQuestion, UIRound, UITeam} from "@/app/(host)/game/editor/types";
+import {UICategory, UIQuestion, UIRound, UITeam} from "@/src/host/game/editor/types";
 
 export function useGameEditor(gameIdParam: string) {
     const router = useRouter();

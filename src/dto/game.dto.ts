@@ -1,4 +1,5 @@
-import type { ID, ISODateTime, GameStatus, Pagination } from './common.dto';
+import {ID, ISODateTime, GameStatus, Pagination, GamePhase} from './common.dto';
+
 
 export interface GameSettings {
   time_to_think_sec: number;
@@ -105,5 +106,23 @@ export interface AnswerDomain {
   teamName: string;
   answerText: string;
   status: string;
+  submittedAt: string;
+  lateBySeconds?: number;
+}
+
+export interface GameState {
+  phase: GamePhase;
+  seconds: number;
+  isPaused: boolean;
+  activeQuestionId?: number;
+  activeQuestionNumber?: number;
+  status?: GameStatus;
+}
+
+export interface SubmitAnswerDto {
+  gameId: number;
+  participantId: number;
+  answer: string;
+  questionId: number;
   submittedAt: string;
 }
