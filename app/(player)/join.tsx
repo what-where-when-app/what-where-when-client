@@ -123,7 +123,6 @@ export default function JoinScreen() {
                         ))}
                     </Box>
 
-                    {/* Блок ошибки */}
                     <Box height={20} justify="center">
                         {errorMessage && (
                             <Text variant="bodyS" style={{ color: colors.error.dark, fontWeight: '600' }}>
@@ -134,7 +133,6 @@ export default function JoinScreen() {
                 </Box>
             </Box>
 
-            {/* 2. НИЖНЯЯ ЧАСТЬ */}
             <Box p={6} gap={3} width="100%" maxWidth={450} style={{ alignSelf: 'center' }}>
                 <Button
                     title={loading ? "Поиск..." : "Продолжить"}

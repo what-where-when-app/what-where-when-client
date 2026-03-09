@@ -69,11 +69,9 @@ export default function SelectTeamScreen() {
 
                 <Box maxWidth={450} width="100%" flex={1} p={6} pt={4}>
 
-                    {/* ЧИСТЫЙ И СТРОГИЙ ХЕДЕР */}
                     <Box align="center" mb={6} gap={2}>
                         <Text variant="h1">Вход в игру</Text>
 
-                        {/* Название игры теперь выглядит естественно */}
                         <Box align="center" mt={2} mb={2}>
                             <Text variant="h3" style={{ color: colors.neutralDark.darkest, textAlign: 'center', marginTop: 4 }}>
                                 {game?.gameName || 'Загрузка...'}
@@ -84,7 +82,6 @@ export default function SelectTeamScreen() {
                             <Text variant="bodyM" style={{ color: colors.neutralDark.light }}>
                                 Выберите вашу команду из списка:
                             </Text>
-                            {/* Запасная кнопка обновления для ВЕБА */}
                             {Platform.OS === 'web' && (
                                 <TouchableOpacity onPress={onRefresh} style={{ padding: 4 }}>
                                     <Feather name="refresh-cw" size={16} color={colors.neutralDark.light} />
@@ -93,7 +90,6 @@ export default function SelectTeamScreen() {
                         </Box>
                     </Box>
 
-                    {/* СПИСОК КОМАНД */}
                     <ScrollView
                         style={{ flex: 1 }}
                         contentContainerStyle={{ paddingBottom: 24, gap: 12, flexGrow: 1 }}
@@ -163,7 +159,6 @@ export default function SelectTeamScreen() {
                         )}
                     </ScrollView>
 
-                    {/* НИЖНИЙ БЛОК С КНОПКАМИ */}
                     <Box pt={4} pb={Platform.OS === 'ios' ? 4 : 0} gap={3}>
                         <Button
                             title="Продолжить"
@@ -171,7 +166,6 @@ export default function SelectTeamScreen() {
                             onPress={handleContinue}
                             disabled={!selectedTeam}
                         />
-                        {/* Кнопка выхода переехала сюда */}
                         <Button
                             title="Назад"
                             variant="tertiary"

@@ -9,26 +9,54 @@ import {
     GameBroadcastEvent,
     PlayerResponseEvent
 } from "@/src/dto/common.dto";
-import {GameState} from "@/src/dto/game.dto";
+import { AnswerDomain, GameState, LeaderboardEntry } from "@/src/dto/game.dto";
 
 export function usePlayerGame(gameId: string, teamId: string, teamName: string) {
-    const [status, setStatus] = useState('Подключение...');
-    const [gameStarted, setGameStarted] = useState(false);
-    const [phase, setPhase] = useState<GamePhase>(GamePhase.IDLE);
-    const [timer, setTimer] = useState(0);
-    const [participantId, setParticipantId] = useState<number | null>(null);
-
-    const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null);
-    const [activeQuestionNumber, setActiveQuestionNumber] = useState<number | null>(null);
-    const [lastAnswerStatus, setLastAnswerStatus] = useState<'success' | 'error' | null>(null);
-
     const socketRef = useRef<Socket | null>(null);
 
-    useEffect(() => {
-        if (phase === GamePhase.IDLE || phase === GamePhase.PREPARATION) {
-            setLastAnswerStatus(null);
-        }
-    }, [phase, activeQuestionId]);
+    const participantIdRef = useRef<number | null>(null);
+
+    const [status, setStatus] = useState('Подключение...');
+    const [participantId, setParticipantId] = useState<number | null>(null);
+    const [lastAnswerStatus, setLastAnswerStatus] = useState<'success' | 'error' | null>(null);
+
+    const [gameState, setGameState] = useState<{
+        phase: GamePhase;
+        timer: number;
+        activeQuestionId: number | null;
+        activeQuestionNumber: number | null;
+        gameStarted: boolean;
+    }>({
+        phase: GamePhase.IDLE,
+        timer: 0,
+        activeQuestionId: null,
+        activeQuestionNumber: null,
+        gameStarted: false,
+    });
+
+    const [history, setHistory] = useState<AnswerDomain[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+    const updateGameState = useCallback((data: GameState) => {
+        setGameState(prev => ({
+            ...prev,
+            phase: data.phase,
+            timer: data.seconds,
+            activeQuestionId: data.activeQuestionId ?? prev.activeQuestionId,
+            activeQuestionNumber: data.activeQuestionNumber ?? prev.activeQuestionNumber,
+            gameStarted: data.status === GameStatuses.LIVE || data.phase !== GamePhase.IDLE
+        }));
+    }, []);
+
+    const syncHistory = useCallback(() => {
+        const id = participantIdRef.current;
+        if (id) socketRef.current?.emit(PlayerRequestEvent.SyncHistory, { participantId: id });
+    }, []);
+
+    const syncLeaderboard = useCallback(() => {
+        const id = participantIdRef.current;
+        if (id) socketRef.current?.emit(PlayerRequestEvent.SyncLeaderboard, { participantId: id });
+    }, []);
 
     useEffect(() => {
         const url = `${getSocketUrl()}/game`;
@@ -44,39 +72,28 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
         });
 
         socket.on(GameBroadcastEvent.SyncState, (data: { state: GameState, participantId: number }) => {
-            if (data.participantId) setParticipantId(data.participantId);
-
-            const state = data.state;
-            if (state) {
-                setPhase(state.phase);
-                setTimer(state.seconds);
-
-                if (state.activeQuestionId !== undefined) setActiveQuestionId(state.activeQuestionId);
-                if (state.activeQuestionNumber !== undefined) setActiveQuestionNumber(state.activeQuestionNumber);
-
-                if (state.status === GameStatuses.LIVE || state.phase !== GamePhase.IDLE) {
-                    setGameStarted(true);
-                }
+            if (data.participantId) {
+                participantIdRef.current = data.participantId;
+                setParticipantId(data.participantId);
             }
+            if (data.state) updateGameState(data.state);
         });
 
-        socket.on(GameBroadcastEvent.TimerUpdate, (state: GameState) => {
-            setTimer(state.seconds);
-            setPhase(state.phase);
-
-            if (state.activeQuestionId !== undefined) setActiveQuestionId(state.activeQuestionId);
-            if (state.activeQuestionNumber !== undefined) setActiveQuestionNumber(state.activeQuestionNumber);
-        });
+        socket.on(GameBroadcastEvent.TimerUpdate, (state: GameState) => updateGameState(state));
 
         socket.on(GameBroadcastEvent.StatusChanged, (data: { status: GameStatus }) => {
             if (data.status === GameStatuses.LIVE) {
-                setGameStarted(true);
+                setGameState(prev => ({ ...prev, gameStarted: true }));
             }
         });
+
+        socket.on(PlayerResponseEvent.HistoryUpdate, setHistory);
+        socket.on(GameBroadcastEvent.LeaderboardUpdate, setLeaderboard);
 
         socket.on(PlayerResponseEvent.AnswerReceived, () => {
             setLastAnswerStatus('success');
             setStatus(`Команда: ${teamName}`);
+            syncHistory();
         });
 
         socket.on('error', (err: { message: string }) => {
@@ -86,30 +103,55 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
 
         socket.on('disconnect', () => setStatus('Связь потеряна...'));
 
-        return () => { socket.disconnect(); };
-    }, [gameId, teamId, teamName]);
+        return () => {
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, [gameId, teamId, teamName, syncHistory, updateGameState]);
+
+    useEffect(() => {
+        if (participantId) {
+            syncHistory();
+            syncLeaderboard();
+        }
+    }, [participantId, syncHistory, syncLeaderboard]);
+
+    useEffect(() => {
+        if (gameState.phase === GamePhase.IDLE || gameState.phase === GamePhase.PREPARATION) {
+            setLastAnswerStatus(null);
+        }
+    }, [gameState.phase, gameState.activeQuestionId]);
 
     const submitAnswer = useCallback((answerText: string) => {
-        if (socketRef.current && phase !== GamePhase.IDLE && phase !== GamePhase.PREPARATION && participantId && activeQuestionId) {
+        const id = participantIdRef.current;
+        const canSubmit =
+            socketRef.current &&
+            gameState.phase !== GamePhase.IDLE &&
+            gameState.phase !== GamePhase.PREPARATION &&
+            id &&
+            gameState.activeQuestionId;
 
-            socketRef.current.emit(PlayerRequestEvent.SubmitAnswer, {
+        if (canSubmit) {
+            socketRef.current?.emit(PlayerRequestEvent.SubmitAnswer, {
                 gameId: Number(gameId),
-                participantId: participantId,
-                questionId: activeQuestionId,
+                participantId: id,
+                questionId: gameState.activeQuestionId,
                 answer: answerText,
                 submittedAt: new Date().toISOString()
             });
             setStatus('Отправка...');
         }
-    }, [gameId, phase, participantId, activeQuestionId]);
+    }, [gameId, gameState.phase, gameState.activeQuestionId]);
 
     return {
         status,
-        gameStarted,
-        phase,
-        timer,
-        activeQuestionNumber,
+        participantId,
+        ...gameState,
         lastAnswerStatus,
-        submitAnswer
+        history,
+        leaderboard,
+        submitAnswer,
+        syncHistory,
+        syncLeaderboard
     };
 }

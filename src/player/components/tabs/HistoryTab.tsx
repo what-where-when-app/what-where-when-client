@@ -1,30 +1,38 @@
 import React from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { colors } from '@/src/theme/colors';
-
-export interface AnswerHistoryItem {
-    questionNumber: number;
-    answerText: string;
-}
+import { AnswerDomain } from '@/src/dto/game.dto';
+import { AnswerStatus } from '@/src/dto/common.dto';
 
 interface HistoryTabProps {
-    history: AnswerHistoryItem[];
+    history: AnswerDomain[];
 }
 
 export const HistoryTab = ({ history }: HistoryTabProps) => {
+    const getStatusConfig = (status: string) => {
+        switch (status) {
+            case AnswerStatus.CORRECT:
+                return { icon: 'check', color: colors.success.medium };
+            case AnswerStatus.INCORRECT:
+                return { icon: 'x', color: colors.error.medium };
+            case AnswerStatus.DISPUTABLE:
+                return { icon: 'help-circle', color: colors.highlight.dark };
+            default:
+                return { icon: 'clock', color: colors.neutralDark.light };
+        }
+    };
+
     return (
         <ScrollView
             contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}
         >
-            <Box gap={4} mb={6}>
+            <Box mb={4} style={{ paddingHorizontal: 16 }}>
                 <Text variant="h2" style={{ color: colors.neutralDark.darkest }}>
                     История ответов
-                </Text>
-                <Text variant="bodyM" style={{ color: colors.neutralDark.light }}>
-                    Ваши отправленные ответы
                 </Text>
             </Box>
 
@@ -35,18 +43,33 @@ export const HistoryTab = ({ history }: HistoryTabProps) => {
                     </Text>
                 </Box>
             ) : (
-                <Box gap={3}>
-                    {/* Переворачиваем массив, чтобы последние ответы были сверху */}
-                    {[...history].reverse().map((item, index) => (
-                        <Box key={index} style={styles.card}>
-                            <Text variant="captionM" style={styles.questionLabel}>
-                                ВОПРОС {item.questionNumber}
-                            </Text>
-                            <Text variant="bodyL" style={styles.answerText}>
-                                {item.answerText}
-                            </Text>
-                        </Box>
-                    ))}
+                <Box>
+                    {[...history].reverse().map((item) => {
+                        const statusInfo = getStatusConfig(item.status);
+
+                        return (
+                            <Box key={item.id} row align="center" style={styles.row}>
+                                <Box style={styles.iconContainer}>
+                                    <Feather
+                                        name={statusInfo.icon as any}
+                                        size={20}
+                                        color={statusInfo.color}
+                                    />
+                                </Box>
+
+                                <Box flex={1}>
+                                    <Text variant="bodyL" style={{ lineHeight: 22 }}>
+                                        <Text style={styles.questionNumber}>
+                                            {item.questionNumber || '?'}.{' '}
+                                        </Text>
+                                        <Text style={styles.answerText}>
+                                            {item.answerText}
+                                        </Text>
+                                    </Text>
+                                </Box>
+                            </Box>
+                        );
+                    })}
                 </Box>
             )}
         </ScrollView>
@@ -56,11 +79,11 @@ export const HistoryTab = ({ history }: HistoryTabProps) => {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        paddingVertical: 16,
-        paddingHorizontal: 24,
+        paddingVertical: 12,
     },
     emptyBox: {
         marginTop: 40,
+        marginHorizontal: 16,
         padding: 32,
         backgroundColor: colors.neutralLight.light,
         borderRadius: 12,
@@ -68,20 +91,24 @@ const styles = StyleSheet.create({
         borderColor: colors.neutralLight.medium,
         borderStyle: 'dashed'
     },
-    card: {
-        backgroundColor: colors.neutralLight.lightest,
-        borderWidth: 1,
-        borderColor: colors.neutralLight.medium,
-        borderRadius: 12,
-        padding: 16,
+    row: {
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.neutralLight.medium,
+        minHeight: 48,
     },
-    questionLabel: {
-        color: colors.neutralDark.medium,
-        marginBottom: 8,
-        letterSpacing: 1,
+    iconContainer: {
+        width: 26,
+        marginRight: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    questionNumber: {
+        fontWeight: 'bold',
+        color: colors.neutralDark.darkest,
     },
     answerText: {
         color: colors.neutralDark.darkest,
-        fontWeight: '500',
     }
 });

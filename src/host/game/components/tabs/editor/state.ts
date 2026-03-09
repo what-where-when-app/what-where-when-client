@@ -9,7 +9,7 @@ import { roundKey, questionKey } from "./keys";
 import {hostApi} from "@/src/api/host";
 import {toSaveGameDraft} from "@/src/game/mappers";
 import {tmpId} from "@/src/utils/tmpId";
-import {UICategory, UIQuestion, UIRound, UITeam} from "@/src/host/game/editor/types";
+import {UICategory, UIQuestion, UIRound, UITeam} from "@/src/host/game/components/tabs/editor/types";
 
 export function useGameEditor(gameIdParam: string) {
     const router = useRouter();
@@ -119,10 +119,39 @@ export function useGameEditor(gameIdParam: string) {
 
         if (!loaded) return;
 
+        const cleanDraft = {
+            ...draft,
+            categories: draft.categories.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                description: c.description,
+            })),
+            teams: draft.teams.map((t: any) => ({
+                id: t.id,
+                name: t.name,
+                team_code: t.team_code,
+                category_id: t.category_id || t.categoryId,
+            })),
+            rounds: draft.rounds.map((r: any) => ({
+                id: r.id,
+                round_number: r.round_number,
+                name: r.name,
+                questions: r.questions.map((q: any) => ({
+                    id: q.id,
+                    round_id: q.round_id,
+                    question_number: q.question_number,
+                    text: q.text,
+                    answer: q.answer,
+                    time_to_think_sec: q.time_to_think_sec,
+                    time_to_answer_sec: q.time_to_answer_sec,
+                })),
+            })),
+        };
+
         const body: SaveGameRequest = {
             game_id: loaded.id,
             version: loaded.version,
-            game: draft,
+            game: cleanDraft,
             deleted_round_ids: deletedRoundIds.length ? deletedRoundIds : undefined,
             deleted_question_ids: deletedQuestionIds.length ? deletedQuestionIds : undefined,
             deleted_team_ids: deletedTeamIds.length ? deletedTeamIds : undefined,
@@ -165,7 +194,7 @@ export function useGameEditor(gameIdParam: string) {
     }
 
     // ---- Teams ----
-    function addTeam(name: string, code: string) {
+    function addTeam(name: string, code: string, categoryId: number) {
         const n = name.trim();
         const c = code.trim().toUpperCase().replace(/\s+/g, "");
         if (!n || !c) return;
@@ -173,7 +202,12 @@ export function useGameEditor(gameIdParam: string) {
         const exists = (draft.teams as UITeam[]).some((t) => t.team_code === c);
         if (exists) return;
 
-        const next: UITeam = { _tmpId: tmpId("team"), name: n, team_code: c };
+        const next: UITeam & { category_id?: number | null } = {
+            _tmpId: tmpId("team"),
+            name: n,
+            team_code: c,
+            category_id: categoryId
+        };
         setDraft((d) => ({ ...d, teams: [...(d.teams as UITeam[]), next] }));
     }
 

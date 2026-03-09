@@ -1,10 +1,10 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
-import {GameMetaRow} from "@/src/host/game/editor/ui/GameMetaRow";
-import {SettingsSections} from "@/src/host/game/editor/ui/Settings";
-import {CategoriesSection} from "@/src/host/game/editor/ui/Categories";
-import {TeamsSection} from "@/src/host/game/editor/ui/Teams";
-import {QuestionsSection} from "@/src/host/game/editor/ui/Questions";
+import {GameMetaRow} from "@/src/host/game/components/tabs/editor/ui/GameMetaRow";
+import {SettingsSections} from "@/src/host/game/components/tabs/editor/ui/Settings";
+import {CategoriesSection} from "@/src/host/game/components/tabs/editor/ui/Categories";
+import {TeamsSection} from "@/src/host/game/components/tabs/editor/ui/Teams";
+import {QuestionsSection} from "@/src/host/game/components/tabs/editor/ui/Questions";
 
 interface EditorContentProps {
     editor: any;
@@ -34,6 +34,7 @@ export const EditorContent = ({ editor }: EditorContentProps) => {
 
             <TeamsSection
                 teams={editor.draft.teams}
+                categories={editor.draft.categories}
                 onAdd={editor.addTeam}
                 onRemove={editor.removeTeam}
             />

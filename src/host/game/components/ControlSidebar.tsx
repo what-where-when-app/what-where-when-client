@@ -5,7 +5,7 @@ import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { Button } from '@/src/ui/Button';
 import { colors } from '@/src/theme/colors';
-import { UIRound } from '@/src/host/game/editor/types';
+import { UIRound } from '@/src/host/game/components/tabs/editor/types';
 import { GamePhase, GameStatuses } from "@/src/dto/common.dto";
 import { TimerBar } from '@/src/ui/TimerBar';
 import { GameState, AnswerDomain } from "@/src/dto/game.dto";
@@ -70,7 +70,6 @@ export const ControlSidebar = ({
         }
     };
 
-    // --- ЛОГИКА УМНЫХ КНОПОК ---
     let topBtnTitle = "Начать вопрос";
     let topBtnAction = () => {};
     let topBtnVariant: "primary" | "secondary" | "tertiary" = "primary";
@@ -79,18 +78,18 @@ export const ControlSidebar = ({
     if (isPreparation) {
         topBtnTitle = "Начать вопрос";
         topBtnAction = () => onStartQuestion(gameState.activeQuestionId!);
-        topBtnVariant = "primary";      // Главный акцент на старт
-        nextBtnVariant = "secondary";   // Следующий пока не нужен
+        topBtnVariant = "primary";
+        nextBtnVariant = "secondary";
     } else if (isPhaseActive) {
         topBtnTitle = "Завершить вопрос";
         topBtnAction = onStopQuestion;
-        topBtnVariant = "primary";      // Главный акцент на завершение (или можно secondary, но primary заметнее)
-        nextBtnVariant = "secondary";   // Следующий пока не нужен
+        topBtnVariant = "primary";
+        nextBtnVariant = "secondary";
     } else {
         topBtnTitle = "Перезапустить вопрос";
-        topBtnAction = () => onPrepareQuestion(gameState.activeQuestionId!); // Возвращаем в фазу PREPARATION
-        topBtnVariant = "secondary";    // Акцент ушел, это запасное действие
-        nextBtnVariant = "primary";     // Главный акцент на переход к следующему вопросу!
+        topBtnAction = () => onPrepareQuestion(gameState.activeQuestionId!);
+        topBtnVariant = "secondary";
+        nextBtnVariant = "primary";
     }
 
     console.log('Sidebar Debug:', {
@@ -185,14 +184,12 @@ export const ControlSidebar = ({
 
                         {isLive && gameState.activeQuestionId && (
                             <>
-                                {/* УМНАЯ ВЕРХНЯЯ КНОПКА */}
                                 <Button
                                     title={topBtnTitle}
                                     onPress={topBtnAction}
                                     variant={topBtnVariant}
                                 />
 
-                                {/* КНОПКИ НАВИГАЦИИ С УМНЫМ АКЦЕНТОМ */}
                                 <Box row justify="space-between" style={{ gap: 8, marginTop: 4 }}>
                                     <View style={{ flex: 1 }}>
                                         <Button title="< Пред." onPress={onPrevQuestion} variant="tertiary" />
@@ -203,7 +200,6 @@ export const ControlSidebar = ({
                                 </Box>
                             </>
                         )}
-                        {/* Если игра запущена, но вопрос еще ни разу не выбирали */}
                         {isLive && !gameState.activeQuestionId && (
                             <Button title="Начать первый вопрос" onPress={onNextQuestion} variant="primary" />
                         )}

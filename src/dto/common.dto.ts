@@ -69,13 +69,16 @@ export enum PlayerRequestEvent {
   JoinGame = 'join_game',
   SubmitAnswer = 'player:submit_answer',
   Dispute = 'player:dispute',
+  SyncHistory = 'sync_history',
+  SyncLeaderboard = 'sync_leaderboard',
 }
 
 /**
  * Events sent from the Server specifically to a Player
  */
 export enum PlayerResponseEvent {
-  AnswerReceived = 'answer_received',
+  AnswerReceived = 'answer_received', // Confirmation that the team's answer was successfully saved
+  HistoryUpdate = 'history_update',
 }
 
 /**

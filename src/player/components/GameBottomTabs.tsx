@@ -20,7 +20,7 @@ export const GameBottomTabs = ({ activeTab, onTabChange }: GameBottomTabsProps) 
                 borderTopWidth: 1,
                 borderColor: colors.neutralLight.medium,
                 backgroundColor: colors.neutralLight.lightest,
-                paddingBottom: Platform.OS === 'ios' ? 20 : 0 // Отступ для полоски на новых iPhone
+                paddingBottom: Platform.OS === 'ios' ? 20 : 0
             }}
         >
             <TabButton

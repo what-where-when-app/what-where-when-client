@@ -10,7 +10,7 @@ interface MiniGameWidgetProps {
     phaseText: string;
     timeLeft: number;
     totalTime: number;
-    onPress: () => void; // Чтобы вернуться на вкладку "Игра" по клику на виджет
+    onPress: () => void;
 }
 
 export const MiniGameWidget = ({ phaseText, timeLeft, totalTime, onPress }: MiniGameWidgetProps) => {
@@ -44,7 +44,6 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderBottomWidth: 1,
         borderColor: colors.highlight.light,
-        // Легкая тень, чтобы виджет парил над табами
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.05,

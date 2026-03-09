@@ -96,7 +96,6 @@ export const PlayTab = ({
                     </Box>
 
                 ) : (
-                    // ФАЗЫ THINKING и ANSWERING
                     <Box flex={1} justify="space-between">
                         <Box gap={6}>
                             <Text variant="h2" style={{ color: colors.neutralDark.darkest }}>
@@ -104,14 +103,13 @@ export const PlayTab = ({
                             </Text>
 
                             <Box gap={3}>
-                                {/* ДИНАМИЧЕСКИЙ ТЕКСТ В ЗАВИСИМОСТИ ОТ ТАЙМЕРА */}
                                 <Text variant="bodyM" style={{
                                     color: timer === 0 ? colors.error.medium : colors.neutralDark.medium,
                                     fontWeight: '500'
                                 }}>
                                     {timer > 0
                                         ? `${timer} сек · ${phase === GamePhase.THINKING ? 'обсуждение с командой' : 'напишите ваш ответ!'}`
-                                        : 'Время вышло! Завершайте ответ' // <-- Подсказка при 0 секунд
+                                        : 'Время вышло! Завершайте ответ'
                                     }
                                 </Text>
                                 <TimerBar timeLeft={timer} totalTime={totalTime} height={8} />
@@ -121,13 +119,13 @@ export const PlayTab = ({
                                 <TextInput
                                     style={[
                                         styles.input,
-                                        timer === 0 && styles.inputLate // <-- Добавим красную рамку для опоздавших
+                                        timer === 0 && styles.inputLate
                                     ]}
                                     placeholder="Впишите сюда"
                                     placeholderTextColor={colors.neutralDark.light}
                                     value={answer}
                                     onChangeText={setAnswer}
-                                    editable={!isSubmitting} // <-- УБРАЛИ БЛОКИРОВКУ timer > 0
+                                    editable={!isSubmitting}
                                     multiline
                                     blurOnSubmit
                                 />
@@ -145,7 +143,7 @@ export const PlayTab = ({
                                 title={isSubmitting ? "Отправка..." : "Отправить"}
                                 variant="primary"
                                 onPress={handleSend}
-                                disabled={!answer.trim() || isSubmitting} // <-- УБРАЛИ БЛОКИРОВКУ timer === 0
+                                disabled={!answer.trim() || isSubmitting}
                             />
                         </Box>
                     </Box>

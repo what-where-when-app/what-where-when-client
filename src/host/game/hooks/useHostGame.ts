@@ -8,7 +8,7 @@ import {
     GameStatus,
     GameStatuses
 } from "@/src/dto/common.dto";
-import { AnswerDomain, GameState } from "@/src/dto/game.dto";
+import { AnswerDomain, GameState, LeaderboardEntry } from "@/src/dto/game.dto";
 
 export function useHostGame(gameId: number) {
     const socket = useSocket('game');
@@ -21,17 +21,27 @@ export function useHostGame(gameId: number) {
     });
 
     const [answers, setAnswers] = useState<AnswerDomain[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
     useEffect(() => {
         if (!socket) return;
 
         socket.emit(AdminRequestEvent.Sync, { gameId });
 
-        socket.on(GameBroadcastEvent.SyncState, (data: { state: GameState, answers: AnswerDomain[] }) => {
+        socket.on(GameBroadcastEvent.SyncState, (data: {
+            state: GameState,
+            answers: AnswerDomain[],
+            leaderboard?: LeaderboardEntry[]
+        }) => {
             if (data.state) {
                 setGameState(prev => ({ ...prev, ...data.state }));
             }
-            if (data.answers) setAnswers(data.answers);
+            if (data.answers) {
+                setAnswers(data.answers);
+            }
+            if (data.leaderboard) {
+                setLeaderboard(data.leaderboard);
+            }
         });
 
         socket.on(AdminResponseEvent.AnswerUpdate, (updatedAnswer: AnswerDomain) => {
@@ -70,6 +80,10 @@ export function useHostGame(gameId: number) {
             setGameState(prev => ({ ...prev, isPaused: false }));
         });
 
+        socket.on(GameBroadcastEvent.LeaderboardUpdate, (data: LeaderboardEntry[]) => {
+            setLeaderboard(data);
+        });
+
         return () => {
             socket.off(GameBroadcastEvent.SyncState);
             socket.off(AdminResponseEvent.AnswerUpdate);
@@ -77,13 +91,12 @@ export function useHostGame(gameId: number) {
             socket.off(GameBroadcastEvent.StatusChanged);
             socket.off(GameBroadcastEvent.TimerPaused);
             socket.off(GameBroadcastEvent.TimerResumed);
+            socket.off(GameBroadcastEvent.LeaderboardUpdate);
         };
     }, [socket, gameId]);
 
     const startGame = useCallback(() => socket?.emit(AdminRequestEvent.StartGame, { gameId }), [socket, gameId]);
-
     const prepareQuestion = useCallback((questionId: number) => socket?.emit(AdminRequestEvent.PrepareQuestion, { gameId, questionId }), [socket, gameId]);
-
     const startQuestion = useCallback((questionId: number) => socket?.emit(AdminRequestEvent.StartQuestion, { gameId, questionId }), [socket, gameId]);
     const nextQuestion = useCallback(() => socket?.emit(AdminRequestEvent.NextQuestion, { gameId }), [socket, gameId]);
     const startTimer = useCallback(() => socket?.emit(AdminRequestEvent.ResumeTimer, { gameId }), [socket, gameId]);
@@ -96,6 +109,7 @@ export function useHostGame(gameId: number) {
     return {
         gameState,
         answers,
+        leaderboard,
         startGame,
         prepareQuestion,
         startQuestion,

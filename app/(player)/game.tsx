@@ -5,28 +5,26 @@ import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { colors } from '@/src/theme/colors';
 
-// Импортируем наши новые UI-компоненты
 import { GameHeader } from '../../src/player/components/GameHeader';
 import { GameBottomTabs, TabType } from '../../src/player/components/GameBottomTabs';
 import { MiniGameWidget } from '../../src/player/components/MiniGameWidget';
 
 import { PlayTab } from '@/src/player/components/tabs/PlayTab';
+import { HistoryTab } from '@/src/player/components/tabs/HistoryTab';
 
-// Хук сокетов и типы
 import { usePlayerGame } from '@/src/player/hooks/usePlayerGame';
 import { GamePhase } from '@/src/dto/common.dto';
-import {Keyboard, KeyboardAvoidingView, Platform} from "react-native";
+import { Keyboard, KeyboardAvoidingView, Platform } from "react-native";
+import {LeaderboardTab} from "@/src/player/components/tabs/LeaderboardTab";
 
 export default function GameScreen() {
     const { gameId, teamId, teamName } = useLocalSearchParams();
 
-    // Стейт для управления текущей открытой вкладкой
     const [activeTab, setActiveTab] = useState<TabType>('play');
 
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
     React.useEffect(() => {
-        // Слушаем события открытия/закрытия клавиатуры
         const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
         const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
@@ -46,7 +44,10 @@ export default function GameScreen() {
         timer,
         activeQuestionNumber,
         lastAnswerStatus,
-        submitAnswer
+        submitAnswer,
+        history,
+        leaderboard,
+        participantId
     } = usePlayerGame(
         gameId as string,
         teamId as string,
@@ -57,18 +58,15 @@ export default function GameScreen() {
     const [prevPhase, setPrevPhase] = useState(phase);
 
     React.useEffect(() => {
-        // Если фаза сменилась, сбрасываем общее время на текущий таймер
         if (phase !== prevPhase) {
             setPrevPhase(phase);
             setPhaseTotalTime(timer > 0 ? timer : 1);
         }
-        // Если таймер вдруг стал больше (например, админ накинул время)
         else if (timer > phaseTotalTime) {
             setPhaseTotalTime(timer);
         }
     }, [phase, timer, prevPhase, phaseTotalTime]);
 
-    // Функция, которая подставляет нужный контент в центр экрана
     const renderContent = () => {
         switch (activeTab) {
             case 'play':
@@ -84,38 +82,32 @@ export default function GameScreen() {
                     />
                 );
             case 'history':
-                return (
-                    <Box flex={1} justify="center" align="center">
-                        <Text variant="h2">История</Text>
-                    </Box>
-                );
+                return <HistoryTab history={history} />;
+
             case 'results':
-                // ЗДЕСЬ БУДЕТ ResultsTab.tsx
                 return (
-                    <Box flex={1} justify="center" align="center">
-                        <Text variant="h2">Результаты</Text>
-                    </Box>
+                    <LeaderboardTab
+                        leaderboard={leaderboard}
+                        currentParticipantId={participantId}
+                    />
                 );
             default:
                 return null;
         }
     };
 
-    // Определяем, нужно ли показывать свернутый виджет.
-    // Показываем его ТОЛЬКО если игра идет, мы не на главной вкладке, и фаза не IDLE.
     const shouldShowMiniWidget = gameStarted && activeTab !== 'play' &&
         (phase === GamePhase.THINKING || phase === GamePhase.ANSWERING);
 
-    // Определяем текст для мини-виджета в зависимости от фазы
     const getPhaseText = () => {
         if (phase === GamePhase.THINKING) return 'Время на обсуждение';
         if (phase === GamePhase.ANSWERING) return 'Время для ответа';
         if (phase === GamePhase.PREPARATION) return 'Внимание, вопрос...';
         return 'Ожидание...';
     };
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.neutralLight.lightest }}>
-            {/* ПЕРЕНЕСЛИ KEYBOARD AVOIDING VIEW СЮДА */}
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 enabled={Platform.OS !== 'web'}
@@ -127,7 +119,7 @@ export default function GameScreen() {
                         <GameHeader
                             teamName={teamName as string}
                             gameName="ЧГК: Осенняя серия"
-                            roundInfo="Раунд 1 • Вопрос 5"
+                            roundInfo={activeQuestionNumber ? `Вопрос №${activeQuestionNumber}` : "Ожидание..."}
                         />
 
                         <Box flex={1} style={{ width: '100%' }}>
@@ -143,7 +135,6 @@ export default function GameScreen() {
                             />
                         )}
 
-                        {/* СКРЫВАЕМ ТАБЫ, ЕСЛИ ОТКРЫТА КЛАВИАТУРА (!isKeyboardVisible) */}
                         {gameStarted && !isKeyboardVisible && (
                             <GameBottomTabs
                                 activeTab={activeTab}
