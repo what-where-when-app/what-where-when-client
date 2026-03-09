@@ -14,5 +14,6 @@ export const metrics = {
         5: 20,
         6: 24,
         8: 32,
+        16: 64,
     },
 } as const;

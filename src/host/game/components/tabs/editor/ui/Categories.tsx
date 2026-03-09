@@ -6,7 +6,7 @@ import { ListItem } from "@/src/ui/ListItem";
 import { Tag } from "@/src/ui/Tag";
 import { Icon } from "@/src/ui/Icon";
 import { colors } from "@/src/theme/colors";
-import {UICategory} from "@/app/(host)/game/editor/types";
+import {UICategory} from "@/src/host/game/components/tabs/editor/types";
 import {Button} from "@/src/ui/Button";
 
 export function CategoriesSection({
@@ -23,23 +23,23 @@ export function CategoriesSection({
 
     return (
         <View style={{ paddingHorizontal: 16 }}>
-            <Text variant="h3" style={{ paddingVertical: 20 }}>Categories</Text>
+            <Text variant="h3" style={{ paddingVertical: 20 }}>Категории</Text>
 
             <View style={{ paddingVertical: 20, gap: 16 }}>
 
                 <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 10 }}>
                     <View style={{ flex: 1 }}>
-                        <TextField value={name} placeholder="eg. Graduates" onChangeText={setName} />
+                        <TextField value={name} placeholder="Название категории" onChangeText={setName} />
                     </View>
 
                     <View style={{ flex: 1 }}>
-                        <TextField value={desc} placeholder="Description" onChangeText={setDesc} />
+                        <TextField value={desc} placeholder="Описание" onChangeText={setDesc} />
                     </View>
 
                     <View style={{ flex: 1, alignSelf: "center" }}>
                         <Button
-                            title={"Add category"}
-                            variant="tertiary"
+                            title={"Добавить категорию"}
+                            variant="secondary"
                             onPress={() => {
                                 onAdd(name, desc);
                                 setName("");

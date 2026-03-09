@@ -1,59 +1,150 @@
-// app/(player)/game.tsx
-import React from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { colors } from '@/src/theme/colors';
-import { usePlayerGame } from './hooks/usePlayerGame';
-import {AnsweringPhase, GameLobby, ThinkingPhase} from "@/app/(player)/components/GamePhases";
-import {GamePhase} from "@/src/dto/common.dto";
+
+import { GameHeader } from '../../src/player/components/GameHeader';
+import { GameBottomTabs, TabType } from '../../src/player/components/GameBottomTabs';
+import { MiniGameWidget } from '../../src/player/components/MiniGameWidget';
+
+import { PlayTab } from '@/src/player/components/tabs/PlayTab';
+import { HistoryTab } from '@/src/player/components/tabs/HistoryTab';
+
+import { usePlayerGame } from '@/src/player/hooks/usePlayerGame';
+import { GamePhase } from '@/src/dto/common.dto';
+import { Keyboard, KeyboardAvoidingView, Platform } from "react-native";
+import {LeaderboardTab} from "@/src/player/components/tabs/LeaderboardTab";
 
 export default function GameScreen() {
-    const { gameId, teamId, teamName } = useLocalSearchParams<{ gameId: string, teamId: string, teamName: string }>();
+    const { gameId, teamId, teamName } = useLocalSearchParams();
 
-    const { status, gameStarted, phase, timer, submitAnswer } = usePlayerGame(gameId, teamId, teamName);
+    const [activeTab, setActiveTab] = useState<TabType>('play');
+
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+    React.useEffect(() => {
+        const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+        const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+        const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+        const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
+
+    const {
+        status,
+        gameStarted,
+        phase,
+        timer,
+        activeQuestionNumber,
+        lastAnswerStatus,
+        submitAnswer,
+        history,
+        leaderboard,
+        participantId
+    } = usePlayerGame(
+        gameId as string,
+        teamId as string,
+        teamName as string
+    );
+
+    const [phaseTotalTime, setPhaseTotalTime] = useState(timer > 0 ? timer : 1);
+    const [prevPhase, setPrevPhase] = useState(phase);
+
+    React.useEffect(() => {
+        if (phase !== prevPhase) {
+            setPrevPhase(phase);
+            setPhaseTotalTime(timer > 0 ? timer : 1);
+        }
+        else if (timer > phaseTotalTime) {
+            setPhaseTotalTime(timer);
+        }
+    }, [phase, timer, prevPhase, phaseTotalTime]);
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'play':
+                return (
+                    <PlayTab
+                        phase={phase}
+                        timer={timer}
+                        totalTime={phaseTotalTime}
+                        questionNumber={activeQuestionNumber}
+                        gameStarted={gameStarted}
+                        submitAnswer={submitAnswer}
+                        lastAnswerStatus={lastAnswerStatus}
+                    />
+                );
+            case 'history':
+                return <HistoryTab history={history} />;
+
+            case 'results':
+                return (
+                    <LeaderboardTab
+                        leaderboard={leaderboard}
+                        currentParticipantId={participantId}
+                    />
+                );
+            default:
+                return null;
+        }
+    };
+
+    const shouldShowMiniWidget = gameStarted && activeTab !== 'play' &&
+        (phase === GamePhase.THINKING || phase === GamePhase.ANSWERING);
+
+    const getPhaseText = () => {
+        if (phase === GamePhase.THINKING) return 'Время на обсуждение';
+        if (phase === GamePhase.ANSWERING) return 'Время для ответа';
+        if (phase === GamePhase.PREPARATION) return 'Внимание, вопрос...';
+        return 'Ожидание...';
+    };
 
     return (
-        <Box style={styles.container}>
-            <Header teamName={teamName} gameId={gameId} />
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.neutralLight.lightest }}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                enabled={Platform.OS !== 'web'}
+                style={{ flex: 1 }}
+            >
+                <Box flex={1} align="center">
+                    <Box maxWidth={450} width="100%" flex={1} justify="space-between">
 
-            <Box style={styles.centerContainer}>
-                {gameStarted ? (
-                    <>
-                        {phase === GamePhase.IDLE && <Text variant="h5">Приготовьтесь...</Text>}
-                        {phase !== GamePhase.IDLE && <ThinkingPhase timer={timer}/>}
-                        {phase !== GamePhase.IDLE && <AnsweringPhase
-                            onSubmit={submitAnswer}
-                        />}
-                    </>
-                ) : (
-                    <GameLobby/>
-                )}
-            </Box>
+                        <GameHeader
+                            teamName={teamName as string}
+                            gameName="ЧГК: Осенняя серия"
+                            roundInfo={activeQuestionNumber ? `Вопрос №${activeQuestionNumber}` : "Ожидание..."}
+                        />
 
-            <Footer status={status} />
-        </Box>
+                        <Box flex={1} style={{ width: '100%' }}>
+                            {renderContent()}
+                        </Box>
+
+                        {shouldShowMiniWidget && (
+                            <MiniGameWidget
+                                phaseText={getPhaseText()}
+                                timeLeft={timer}
+                                totalTime={phaseTotalTime}
+                                onPress={() => setActiveTab('play')}
+                            />
+                        )}
+
+                        {gameStarted && !isKeyboardVisible && (
+                            <GameBottomTabs
+                                activeTab={activeTab}
+                                onTabChange={setActiveTab}
+                            />
+                        )}
+
+                    </Box>
+                </Box>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
-
-// Вспомогательные мини-компоненты для чистоты
-const Header = ({ teamName, gameId }: any) => (
-    <Box style={styles.headerContainer}>
-        <Text variant="h4">{teamName}</Text>
-        <Text variant="captionM" style={{ color: '#888' }}>ID игры: {gameId}</Text>
-    </Box>
-);
-
-const Footer = ({ status }: any) => (
-    <Box style={styles.footerContainer}>
-        <Text variant="captionM" style={{ textAlign: 'center' }}>Статус: {status}</Text>
-    </Box>
-);
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff', padding: 16, justifyContent: 'space-between' },
-    headerContainer: { alignItems: 'center', marginTop: 40 },
-    centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    footerContainer: { padding: 12, backgroundColor: colors.neutralLight.light, borderRadius: 8 },
-});

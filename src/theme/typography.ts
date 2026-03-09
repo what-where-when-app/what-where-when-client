@@ -30,6 +30,7 @@ export const typography = {
     },
 
     caption: {
-        m: { fontSize: 10, lineHeight: 12, fontFamily: "InterMedium" },
+        m: { fontSize: 12, lineHeight: 14, fontFamily: "InterMedium" },
+        s: { fontSize: 10, lineHeight: 12, fontFamily: "InterMedium" },
     },
 } as const;

@@ -8,8 +8,8 @@ import { Button } from "@/src/ui/Button";
 import { Icon } from "@/src/ui/Icon";
 import { colors } from "@/src/theme/colors";
 import { metrics } from "@/src/theme/metrics";
-import {UIQuestion, UIRound} from "@/app/(host)/game/editor/types";
-import {questionKey, roundKey} from "@/app/(host)/game/editor/keys";
+import {UIQuestion, UIRound} from "@/src/host/game/components/tabs/editor/types";
+import {questionKey, roundKey} from "@/src/host/game/components/tabs/editor/keys";
 
 export function QuestionsSection({
                                      rounds,

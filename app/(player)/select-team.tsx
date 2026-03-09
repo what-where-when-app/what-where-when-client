@@ -1,98 +1,214 @@
-import React from 'react';
-import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ScrollView,
+    TouchableOpacity,
+    StyleSheet,
+    Platform,
+    Alert,
+    RefreshControl,
+} from 'react-native';
+import { checkGameByCode } from '@/src/api/player';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
-import { Tag } from '@/src/ui/Tag';
-import {colors} from "@/src/theme/colors";
-import {metrics} from "@/src/theme/metrics";
+import { Button } from '@/src/ui/Button';
+import { colors } from '@/src/theme/colors';
+import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function SelectTeamScreen() {
-    const { gameData } = useLocalSearchParams();
+    const { gameData, code } = useLocalSearchParams();
     const router = useRouter();
 
-    const game = gameData ? JSON.parse(gameData as string) : null;
+    const [game, setGame] = useState<any>(gameData ? JSON.parse(gameData as string) : null);
+    const [selectedTeam, setSelectedTeam] = useState<any>(null);
+    const [refreshing, setRefreshing] = useState(false);
+
     const allTeams = game?.teams || [];
-    const availableTeams = allTeams.filter((t: any) => !t.isTaken);
+
+    const onRefresh = async () => {
+        if (!code) return;
+        setRefreshing(true);
+        try {
+            const freshGameData = await checkGameByCode(code as string);
+            setGame(freshGameData);
+            if (selectedTeam) {
+                const updatedTeam = freshGameData.teams.find((t: any) => t.teamId === selectedTeam.teamId);
+                if (!updatedTeam || !updatedTeam.isAvailable) {
+                    setSelectedTeam(null);
+                }
+            }
+        } catch (e: any) {
+            Alert.alert("Ошибка", "Не удалось обновить список команд");
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const handleSelect = (team: any) => {
+        if (!team.isAvailable) return;
+        setSelectedTeam(team);
+    };
+
+    const handleContinue = () => {
+        if (!selectedTeam) return;
         router.replace({
-            pathname: './game',
+            pathname: '/(player)/game',
             params: {
                 gameId: game.gameId,
-                teamId: team.teamId,
-                teamName: team.name
+                teamId: selectedTeam.teamId,
+                teamName: selectedTeam.name
             }
         });
     };
 
     return (
-        <Box style={styles.container}>
-            <Box style={styles.header}>
-                <Text variant="h4" style={{ marginBottom: 4 }}>
-                    Игра: {game?.gameName}
-                </Text>
-                <Text variant="bodyM" style={{ color: '#666' }}>
-                    Выберите команду:
-                </Text>
-            </Box>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.neutralLight.lightest }}>
+            <Box flex={1} bg="neutralLight.lightest" align="center">
+                <Stack.Screen options={{ headerShown: false }} />
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                {availableTeams.map((team: any) => (
-                    <TouchableOpacity
-                        key={team.teamId}
-                        onPress={() => handleSelect(team)}
-                        activeOpacity={0.7}
-                    >
-                        <Box style={styles.card}>
-                            <Text variant="bodyL" style={styles.teamName}>
-                                {team.name}
+                <Box maxWidth={450} width="100%" flex={1} p={6} pt={4}>
+
+                    <Box align="center" mb={6} gap={2}>
+                        <Text variant="h1">Вход в игру</Text>
+
+                        <Box align="center" mt={2} mb={2}>
+                            <Text variant="h3" style={{ color: colors.neutralDark.darkest, textAlign: 'center', marginTop: 4 }}>
+                                {game?.gameName || 'Загрузка...'}
                             </Text>
-                            <Tag text="Свободно" />
                         </Box>
-                    </TouchableOpacity>
-                ))}
 
-                {availableTeams.length === 0 && (
-                    <Text variant="bodyM" style={styles.emptyText}>
-                        Нет свободных команд
-                    </Text>
-                )}
-            </ScrollView>
-        </Box>
+                        <Box row align="center" justify="center" gap={2}>
+                            <Text variant="bodyM" style={{ color: colors.neutralDark.light }}>
+                                Выберите вашу команду из списка:
+                            </Text>
+                            {Platform.OS === 'web' && (
+                                <TouchableOpacity onPress={onRefresh} style={{ padding: 4 }}>
+                                    <Feather name="refresh-cw" size={16} color={colors.neutralDark.light} />
+                                </TouchableOpacity>
+                            )}
+                        </Box>
+                    </Box>
+
+                    <ScrollView
+                        style={{ flex: 1 }}
+                        contentContainerStyle={{ paddingBottom: 24, gap: 12, flexGrow: 1 }}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={onRefresh}
+                                tintColor={colors.highlight.darkest}
+                                colors={[colors.highlight.darkest]}
+                            />
+                        }
+                    >
+                        {allTeams.map((team: any) => {
+                            const isTaken = !team.isAvailable;
+                            const isSelected = selectedTeam?.teamId === team.teamId;
+
+                            return (
+                                <TouchableOpacity
+                                    key={team.teamId}
+                                    onPress={() => handleSelect(team)}
+                                    activeOpacity={isTaken ? 1 : 0.7}
+                                    disabled={isTaken}
+                                >
+                                    <Box
+                                        row
+                                        justify="space-between"
+                                        align="center"
+                                        p={4}
+                                        radius="md"
+                                        style={[
+                                            styles.card,
+                                            isTaken && styles.cardTaken,
+                                            isSelected && styles.cardSelected
+                                        ]}
+                                    >
+                                        <Text
+                                            variant="bodyL"
+                                            style={{
+                                                fontWeight: '600',
+                                                color: isTaken ? colors.neutralDark.light : colors.neutralDark.darkest
+                                            }}
+                                        >
+                                            {team.name}
+                                        </Text>
+
+                                        {isTaken ? (
+                                            <Feather name="lock" size={20} color={colors.neutralDark.light} />
+                                        ) : isSelected ? (
+                                            <Box style={[styles.radioCircle, styles.radioCircleSelected]}>
+                                                <Box style={styles.radioInner} />
+                                            </Box>
+                                        ) : (
+                                            <Box style={styles.radioCircle} />
+                                        )}
+                                    </Box>
+                                </TouchableOpacity>
+                            );
+                        })}
+
+                        {allTeams.length === 0 && (
+                            <Box flex={1} justify="center" align="center" mt={8}>
+                                <Text variant="bodyM" style={{ color: colors.neutralDark.light }}>
+                                    В этой игре пока нет команд
+                                </Text>
+                            </Box>
+                        )}
+                    </ScrollView>
+
+                    <Box pt={4} pb={Platform.OS === 'ios' ? 4 : 0} gap={3}>
+                        <Button
+                            title="Продолжить"
+                            variant="primary"
+                            onPress={handleContinue}
+                            disabled={!selectedTeam}
+                        />
+                        <Button
+                            title="Назад"
+                            variant="tertiary"
+                            onPress={() => router.back()}
+                        />
+                    </Box>
+
+                </Box>
+            </Box>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        padding: 16,
-    },
-    header: {
-        marginTop: 16,
-        marginBottom: 24,
-    },
-    scrollContent: {
-        paddingBottom: 20,
-    },
     card: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        marginBottom: 12,
-        backgroundColor: '#fff',
-        borderWidth: 1,
+        backgroundColor: colors.neutralLight.lightest,
+        borderWidth: 2,
         borderColor: colors.neutralLight.medium,
-        borderRadius: metrics.radius.md,
     },
-    teamName: {
-        fontWeight: '600',
+    cardTaken: {
+        backgroundColor: colors.neutralLight.light,
+        borderColor: colors.neutralLight.medium,
     },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 24,
-        color: '#888',
+    cardSelected: {
+        borderColor: colors.highlight.darkest,
+        backgroundColor: colors.highlight.lightest,
+    },
+    radioCircle: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: colors.neutralLight.dark,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    radioCircleSelected: {
+        borderColor: colors.highlight.darkest,
+    },
+    radioInner: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: colors.highlight.darkest,
     }
 });

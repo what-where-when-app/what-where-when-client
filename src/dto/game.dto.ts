@@ -1,4 +1,5 @@
-import type { ID, ISODateTime, GameStatus, Pagination } from './common.dto';
+import {ID, ISODateTime, GameStatus, Pagination, GamePhase, AnswerStatus} from './common.dto';
+
 
 export interface GameSettings {
   time_to_think_sec: number;
@@ -21,6 +22,7 @@ export interface GameTeam {
   id?: ID;
   name: string;
   team_code: string;
+  category_id: number,
   created_at?: ISODateTime;
 }
 
@@ -58,6 +60,14 @@ export interface HostGameDetails {
 
   updated_at: ISODateTime;
   version: number;
+}
+
+export interface LeaderboardEntry {
+  participantId: number;
+  teamName: string;
+  categoryId: number;
+  categoryName?: string | null;
+  score: number;
 }
 
 export interface HostGameCard {
@@ -101,9 +111,28 @@ export interface SaveGameResponse {
 export interface AnswerDomain {
   id: number;
   questionId: number;
+  questionNumber?: number;
   participantId: number;
   teamName: string;
   answerText: string;
-  status: string;
+  status: AnswerStatus;
+  submittedAt: string;
+  lateBySeconds?: number;
+}
+
+export interface GameState {
+  phase: GamePhase;
+  seconds: number;
+  isPaused: boolean;
+  activeQuestionId?: number;
+  activeQuestionNumber?: number;
+  status?: GameStatus;
+}
+
+export interface SubmitAnswerDto {
+  gameId: number;
+  participantId: number;
+  answer: string;
+  questionId: number;
   submittedAt: string;
 }
