@@ -85,6 +85,10 @@ export const LeaderboardTab = ({ leaderboard, currentParticipantId }: Leaderboar
                                 <Text variant="bodyL" style={[styles.cellText, { width: 48, textAlign: 'right', fontWeight: 'bold', color: colors.highlight.darkest }]}>
                                     {item.score}
                                 </Text>
+
+                                <Text variant="bodyL" style={{ fontWeight: 'bold', color: colors.highlight.darkest, fontSize: 18 }}>
+                                    {item.rating}
+                                </Text>
                             </Box>
                         );
                     })}

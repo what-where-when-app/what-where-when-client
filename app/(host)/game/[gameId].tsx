@@ -88,6 +88,7 @@ export default function GameAdminScreen() {
                         <ControlSidebar
                             isNew={editor.isNew}
                             rounds={editor.rounds}
+                            passcode={editor.loaded?.passcode}
                             answers={answers}
                             onStartGame={startGame}
                             onPrepareQuestion={prepareQuestion}

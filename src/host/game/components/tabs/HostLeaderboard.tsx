@@ -103,6 +103,9 @@ export const HostLeaderboard = ({ leaderboard }: HostLeaderboardProps) => {
                                                 <Text variant="bodyL" style={{ fontWeight: 'bold', color: colors.highlight.darkest, fontSize: 18 }}>
                                                     {team.score}
                                                 </Text>
+                                                <Text variant="bodyL" style={{ fontWeight: 'bold', color: colors.highlight.darkest, fontSize: 18 }}>
+                                                    {team.rating}
+                                                </Text>
                                             </Box>
                                         </Box>
                                     ))}
