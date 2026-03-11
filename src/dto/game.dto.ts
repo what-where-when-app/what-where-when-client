@@ -68,6 +68,7 @@ export interface LeaderboardEntry {
   categoryId: number;
   categoryName?: string | null;
   score: number;
+  rating: number;
 }
 
 export interface HostGameCard {

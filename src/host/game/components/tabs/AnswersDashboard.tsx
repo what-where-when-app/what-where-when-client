@@ -107,6 +107,10 @@ export const AnswersDashboard = ({ rounds, answers, onJudge }: Props) => {
                                     </Box>
 
                                     <Box row align="center" style={{ gap: 12 }}>
+                                        {ans.lateBySeconds ? (
+                                            <Text>Later by seconds {ans.lateBySeconds}</Text>
+                                        ) : null}
+
                                         <TouchableOpacity
                                             style={[styles.actionCircle, isWrong && { backgroundColor: colors.error.medium }]}
                                             onPress={() => onJudge(ans.id, AnswerStatus.INCORRECT)}
