@@ -1,9 +1,17 @@
-import { useEffect } from 'react';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Feather from '@expo/vector-icons/Feather';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
+import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import 'react-native-reanimated';
+
+export {
+  ErrorBoundary,
+} from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,6 +22,10 @@ export default function RootLayout() {
     InterSemiBold: require("../assets/fonts/Inter-SemiBold.ttf"),
     InterBold: require("../assets/fonts/Inter-Bold.ttf"),
     InterExtraBold: require("../assets/fonts/Inter-ExtraBold.ttf"),
+
+    ...FontAwesome.font,
+    ...Feather.font,
+    ...MaterialIcons.font,
   });
 
   useEffect(() => {
@@ -36,18 +48,13 @@ function RootLayoutNav() {
 
   return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        {/* 2. Основной навигационный стек */}
         <Stack screenOptions={{ headerShown: false }}>
-          {/* Главная страница (выбор роли) */}
           <Stack.Screen name="index" />
 
-          {/* Группа экранов для игрока */}
           <Stack.Screen name="(player)" />
 
-          {/* Группа экранов для хоста */}
           <Stack.Screen name="(host)" />
 
-          {/* Модальное окно (если нужно) */}
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack>
       </ThemeProvider>
