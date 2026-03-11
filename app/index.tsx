@@ -4,6 +4,7 @@ import { Box } from '@/src/ui/Box';
 import { Button } from '@/src/ui/Button';
 import { Text } from '@/src/ui/Text';
 import { colors } from '@/src/theme/colors';
+import Feather from "@expo/vector-icons/Feather";
 
 export default function Index() {
     const router = useRouter();
@@ -24,6 +25,7 @@ export default function Index() {
                 style={{ alignSelf: 'center' }}
                 gap={8} // промежуток 32px между заголовком, кнопками и футером
             >
+                <Feather name="smile" size={64} color="black" />
 
                 {/* Хедер */}
                 <Box align="center">
