@@ -54,9 +54,10 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
     }, []);
 
     const syncLeaderboard = useCallback(() => {
-        const id = participantIdRef.current;
-        if (id) socketRef.current?.emit(PlayerRequestEvent.SyncLeaderboard, { participantId: id });
-    }, []);
+        if (gameId) {
+            socketRef.current?.emit(PlayerRequestEvent.SyncLeaderboard, { gameId: Number(gameId) });
+        }
+    }, [gameId]);
 
     useEffect(() => {
         const url = `${getSocketUrl()}/game`;
