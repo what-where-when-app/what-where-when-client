@@ -10,24 +10,16 @@ export default function Index() {
     const router = useRouter();
 
     return (
-        // flex={1} — на весь экран
-        // bg="neutralLight.lightest" — цвет фона из темы
-        // justify="center" — центрируем контент по вертикали
-        // p={6} — отступ 24px (согласно metrics.space[6])
         <Box flex={1} bg="neutralLight.lightest" justify="center" p={6}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Центральная карточка: ограничиваем ширину для десктопа */}
             <Box
                 width="100%"
                 maxWidth={450}
                 align="stretch"
                 style={{ alignSelf: 'center' }}
-                gap={8} // промежуток 32px между заголовком, кнопками и футером
+                gap={8}
             >
-                <Feather name="smile" size={64} color="black" />
-
-                {/* Хедер */}
                 <Box align="center">
                     <Text variant="h1" style={{ textAlign: 'center' }}>
                         Что? Где? Когда?
@@ -44,9 +36,7 @@ export default function Index() {
                     </Text>
                 </Box>
 
-                {/* Группа кнопок */}
                 <Box gap={6}>
-                    {/* Секция Игрока */}
                     <Box gap={3}>
                         <Text variant="h3" style={{ color: colors.neutralDark.medium }}>
                             Для команд
@@ -58,7 +48,6 @@ export default function Index() {
                         />
                     </Box>
 
-                    {/* Секция Хоста */}
                     <Box gap={3}>
                         <Text variant="h3" style={{ color: colors.neutralDark.medium }}>
                             Для организаторов
@@ -71,7 +60,6 @@ export default function Index() {
                     </Box>
                 </Box>
 
-                {/* Футер с разделителем */}
                 <Box
                     pt={6}
                     mt={3}
