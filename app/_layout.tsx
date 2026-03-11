@@ -6,7 +6,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import {Platform, useColorScheme} from 'react-native';
 import 'react-native-reanimated';
 
 export {
@@ -14,6 +14,38 @@ export {
 } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
+
+if (Platform.OS === 'web') {
+  const injectFaviconAndFonts = () => {
+    if (document.getElementById('expo-web-fonts')) return;
+
+    const style = document.createElement('style');
+    style.id = 'expo-web-fonts';
+    style.textContent = `
+      @font-face {
+        font-family: 'Feather';
+        src: url('https://unpkg.com/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'FontAwesome';
+        src: url('https://unpkg.com/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'Material Icons';
+        src: url('https://unpkg.com/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf') format('truetype');
+      }
+      @font-face {
+        font-family: 'MaterialIcons';
+        src: url('https://unpkg.com/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf') format('truetype');
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  if (typeof window !== 'undefined') {
+    injectFaviconAndFonts();
+  }
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
