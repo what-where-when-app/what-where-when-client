@@ -58,12 +58,17 @@ export const PlayTab = ({
         }
     }, [phase]);
 
+    useEffect(() => {
+        if (lastAnswerStatus === 'success' || lastAnswerStatus === 'error' || savedAnswer) {
+            setIsSubmitting(false);
+        }
+    }, [lastAnswerStatus, savedAnswer]);
+
     const handleSend = () => {
         if (!answer.trim()) return;
         setIsSubmitting(true);
         submitAnswer(answer.trim());
         Keyboard.dismiss();
-        setTimeout(() => setIsSubmitting(false), 500);
     };
 
     const isWaiting = !gameStarted || phase === GamePhase.IDLE || phase === GamePhase.PREPARATION;
