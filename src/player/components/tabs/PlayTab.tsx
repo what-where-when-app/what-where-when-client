@@ -14,11 +14,13 @@ import { Button } from '@/src/ui/Button';
 import { colors } from '@/src/theme/colors';
 import { TimerBar } from '@/src/ui/TimerBar';
 import { GamePhase } from '@/src/dto/common.dto';
+import {AnswerDomain} from "@/src/dto/game.dto";
 
 interface PlayTabProps {
     phase: GamePhase;
     timer: number;
     totalTime: number;
+    history: AnswerDomain[];
     questionNumber?: number | null;
     gameStarted: boolean;
     submitAnswer: (answer: string) => void;
@@ -29,14 +31,25 @@ export const PlayTab = ({
                             phase,
                             timer,
                             totalTime,
+                            history,
                             questionNumber,
                             gameStarted,
                             submitAnswer,
                             lastAnswerStatus
                         }: PlayTabProps) => {
 
+    const savedAnswer = React.useMemo(() => {
+        return history.find(a => a.questionNumber === questionNumber) || null;
+    }, [history, questionNumber]);
+
     const [answer, setAnswer] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (savedAnswer) {
+            setAnswer(savedAnswer.answerText);
+        }
+    }, [savedAnswer?.answerText]);
 
     useEffect(() => {
         if (phase === GamePhase.IDLE || phase === GamePhase.PREPARATION) {
@@ -78,10 +91,7 @@ export const PlayTab = ({
                 ) : phase === GamePhase.IDLE ? (
                     <Box align="center" gap={2}>
                         <Text variant="h2" style={{ color: colors.neutralDark.darkest, textAlign: 'center' }}>
-                            Следующий вопрос
-                        </Text>
-                        <Text variant="bodyM" style={{ color: colors.neutralDark.light, textAlign: 'center' }}>
-                            Ожидаем выбор вопроса ведущим
+                            Ожидание...
                         </Text>
                     </Box>
 
@@ -121,7 +131,7 @@ export const PlayTab = ({
                                         styles.input,
                                         timer === 0 && styles.inputLate
                                     ]}
-                                    placeholder="Впишите сюда"
+                                    placeholder="Впишите ответ"
                                     placeholderTextColor={colors.neutralDark.light}
                                     value={answer}
                                     onChangeText={setAnswer}
@@ -130,17 +140,22 @@ export const PlayTab = ({
                                     blurOnSubmit
                                 />
 
-                                {lastAnswerStatus === 'success' && (
-                                    <Text variant="bodyM" style={{ color: colors.success.dark, textAlign: 'center' }}>
-                                        Ответ принят!
-                                    </Text>
+                                {(lastAnswerStatus === 'success' || savedAnswer) && (
+                                    <>
+                                        <Text variant="bodyM" style={{ color: colors.success.dark, textAlign: 'center' }}>
+                                            Ответ принят!
+                                        </Text>
+                                        <Text variant="bodyM" style={{ color: colors.neutralDark.lightest, textAlign: 'center' }}>
+                                            Вы можете поменять ответ
+                                        </Text>
+                                    </>
                                 )}
                             </Box>
                         </Box>
 
                         <Box pt={6}>
                             <Button
-                                title={isSubmitting ? "Отправка..." : "Отправить"}
+                                title={savedAnswer ? "Отправить повторно" : "Отправить"}
                                 variant="primary"
                                 onPress={handleSend}
                                 disabled={!answer.trim() || isSubmitting}

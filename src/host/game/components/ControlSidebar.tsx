@@ -106,11 +106,11 @@ export const ControlSidebar = ({
                 <Box style={{ gap: 12 }}>
                     <Text variant="h2">{gameName || 'Без названия'}</Text>
 
-                    <Box row align="center" justify="space-between" style={styles.statusPill}>
+                    <Box row align="center" justify="space-between" style={[styles.statusPill, {backgroundColor: isLive ? colors.success.light : colors.neutralLight.darkest}]}>
                         <Text variant="bodyS" style={{ color: colors.neutralDark.darkest }}>
                             {isLive ? 'Игра идет' : 'Игра не начата'}
                         </Text>
-                        <View style={[styles.statusDot, { backgroundColor: isLive ? colors.success.medium : colors.neutralLight.dark }]} />
+                        <View style={[styles.statusDot, { backgroundColor: isLive ? colors.success.medium : colors.neutralDark.lightest }]} />
                     </Box>
 
                     <Box style={styles.codeBlock} row align="center" justify="space-between">
@@ -213,9 +213,9 @@ export const ControlSidebar = ({
 const styles = StyleSheet.create({
     sidebar: { width: 280, flexShrink: 0, height: '100%', borderRightWidth: 1, borderRightColor: colors.neutralLight.medium, backgroundColor: colors.neutralLight.lightest, paddingTop: 16, paddingHorizontal: 16 },
     bottomPanel: { paddingVertical: 16, borderTopWidth: 1, borderColor: colors.neutralLight.medium, backgroundColor: colors.neutralLight.lightest, marginHorizontal: -16, paddingHorizontal: 16 },
-    statusPill: { backgroundColor: colors.success.light, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 },
+    statusPill: { paddingHorizontal: 12, paddingVertical: 18, borderRadius: 12 },
     statusDot: { width: 8, height: 8, borderRadius: 4 },
-    codeBlock: { backgroundColor: colors.highlight.lightest, padding: 12, borderRadius: 6, borderWidth: 1, borderColor: colors.highlight.light },
+    codeBlock: { backgroundColor: colors.highlight.lightest, padding: 17, borderRadius: 12, borderWidth: 1, borderColor: colors.highlight.light },
     statRow: { borderWidth: 1, borderColor: colors.neutralLight.medium, borderRadius: 6, padding: 10, alignItems: 'center' },
     badge: { backgroundColor: colors.neutralLight.dark, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 },
     badgeText: { fontSize: 10, color: '#fff', fontWeight: 'bold' },

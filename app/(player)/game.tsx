@@ -96,6 +96,7 @@ export default function GameScreen() {
                         phase={phase}
                         timer={timer}
                         totalTime={phaseTotalTime}
+                        history={history}
                         questionNumber={activeQuestionNumber}
                         gameStarted={gameStarted}
                         submitAnswer={submitAnswer}
@@ -139,8 +140,6 @@ export default function GameScreen() {
 
                         <GameHeader
                             teamName={teamName as string}
-                            gameName="ЧГК: Осенняя серия"
-                            roundInfo={activeQuestionNumber ? `Вопрос №${activeQuestionNumber}` : "Ожидание..."}
                         />
 
                         <Box flex={1} style={{ width: '100%' }}>
