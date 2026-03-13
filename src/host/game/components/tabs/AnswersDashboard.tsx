@@ -33,7 +33,7 @@ export const AnswersDashboard = ({ rounds, answers, onJudge }: Props) => {
                             <Box row style={{ flexWrap: 'wrap', gap: 12 }}>
                                 {allQuestions.map((q, i) => {
                                     const isSelected = q.id === selectedQId;
-                                    const outlineColor = isSelected ? colors.highlight.darkest : (i < 4 ? colors.success.medium : colors.neutralLight.dark);
+                                    const outlineColor = isSelected ? colors.highlight.darkest : colors.neutralLight.dark;
                                     return (
                                         <TouchableOpacity
                                             key={q.id}
