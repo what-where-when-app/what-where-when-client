@@ -197,7 +197,7 @@ export function useGameEditor(gameIdParam: string) {
     function addTeam(name: string, code: string, categoryId: number) {
         const n = name.trim();
         const c = code.trim().toUpperCase().replace(/\s+/g, "");
-        if (!n || !c) return;
+        if (!n) return;
 
         const exists = (draft.teams as UITeam[]).some((t) => t.team_code === c);
         if (exists) return;
