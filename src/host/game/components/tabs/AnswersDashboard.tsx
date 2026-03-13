@@ -55,12 +55,12 @@ export const AnswersDashboard = ({ rounds, answers, onJudge }: Props) => {
                                 })}
                             </Box>
 
-                            <Box row style={{ gap: 16, flexWrap: 'wrap', marginTop: 24 }}>
-                                <LegendItem color={colors.success.medium} label="all checked" />
-                                <LegendItem color={colors.warning.medium} label="dispute" />
-                                <LegendItem color={colors.error.medium} label="not checked" />
-                                <LegendItem color={colors.highlight.darkest} label="current" />
-                            </Box>
+                            {/*<Box row style={{ gap: 16, flexWrap: 'wrap', marginTop: 24 }}>*/}
+                            {/*    <LegendItem color={colors.success.medium} label="all checked" />*/}
+                            {/*    <LegendItem color={colors.warning.medium} label="dispute" />*/}
+                            {/*    <LegendItem color={colors.error.medium} label="not checked" />*/}
+                            {/*    <LegendItem color={colors.highlight.darkest} label="current" />*/}
+                            {/*</Box>*/}
                         </Box>
 
                         <Box style={{ flex: 1 }}>
@@ -108,7 +108,7 @@ export const AnswersDashboard = ({ rounds, answers, onJudge }: Props) => {
 
                                     <Box row align="center" style={{ gap: 12 }}>
                                         {ans.lateBySeconds ? (
-                                            <Text>Later by seconds {ans.lateBySeconds}</Text>
+                                            <Text style={{ color: colors.error.dark }}>Опоздание: {ans.lateBySeconds} сек</Text>
                                         ) : null}
 
                                         <TouchableOpacity
