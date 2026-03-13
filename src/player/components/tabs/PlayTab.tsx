@@ -6,15 +6,16 @@ import {
     StyleSheet,
     TextInput,
     ScrollView,
-    View
+    View, Linking
 } from 'react-native';
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { Button } from '@/src/ui/Button';
 import { colors } from '@/src/theme/colors';
 import { TimerBar } from '@/src/ui/TimerBar';
-import { GamePhase } from '@/src/dto/common.dto';
+import {GamePhase, GameStatus, GameStatuses} from '@/src/dto/common.dto';
 import {AnswerDomain} from "@/src/dto/game.dto";
+import {useRouter} from "expo-router";
 
 interface PlayTabProps {
     phase: GamePhase;
@@ -25,6 +26,7 @@ interface PlayTabProps {
     gameStarted: boolean;
     submitAnswer: (answer: string) => void;
     lastAnswerStatus?: 'success' | 'error' | null;
+    gameStatus?: GameStatus | null;
 }
 
 export const PlayTab = ({
@@ -35,9 +37,9 @@ export const PlayTab = ({
                             questionNumber,
                             gameStarted,
                             submitAnswer,
-                            lastAnswerStatus
-                        }: PlayTabProps) => {
-
+                            lastAnswerStatus,
+                            gameStatus
+}: PlayTabProps) => {
     const savedAnswer = React.useMemo(() => {
         return history.find(a => a.questionNumber === questionNumber) || null;
     }, [history, questionNumber]);
@@ -71,7 +73,7 @@ export const PlayTab = ({
         Keyboard.dismiss();
     };
 
-    const isWaiting = !gameStarted || phase === GamePhase.IDLE || phase === GamePhase.PREPARATION;
+    const isWaiting = !gameStarted || phase === GamePhase.IDLE || phase === GamePhase.PREPARATION || gameStatus === GameStatuses.FINISHED;
 
     const content = (
         <View style={{ flex: 1 }}>
@@ -85,7 +87,23 @@ export const PlayTab = ({
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-                {!gameStarted ? (
+                {gameStatus === GameStatuses.FINISHED ? (
+                        <Box align="center" gap={4}>
+                            <Text variant="h2" style={{ color: colors.neutralDark.darkest, textAlign: 'center' }}>
+                                Игра завершена! 🎉
+                            </Text>
+                            <Text variant="bodyM" style={{ color: colors.neutralDark.light, textAlign: 'center', marginBottom: 16, lineHeight: 22 }}>
+                                Вы можете посмотреть таблицу результатов и свои ответы в соседних вкладках.
+                            </Text>
+                            <Button
+                                title="Дать обратную связь"
+                                variant="primary"
+                                onPress={() => {
+                                    Linking.openURL('https://docs.google.com/forms/d/e/1FAIpQLSei713QAvW06XJrjDr89hVMFkevLimHf8r_X18EW4VUmYuLiw/viewform');
+                                }}
+                            />
+                        </Box>
+                    ) : !gameStarted ? (
                     <Box align="center" gap={2}>
                         <Text variant="h2" style={{ color: colors.neutralDark.medium }}>Ожидание...</Text>
                         <Text variant="bodyM" style={{ color: colors.neutralDark.light, textAlign: 'center' }}>

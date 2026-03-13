@@ -53,7 +53,8 @@ export default function GameScreen() {
     }, []);
 
     const {
-        status,
+        status: connectionStatus,
+        gameStatus,
         gameStarted,
         phase,
         timer,
@@ -101,6 +102,7 @@ export default function GameScreen() {
                         gameStarted={gameStarted}
                         submitAnswer={submitAnswer}
                         lastAnswerStatus={lastAnswerStatus}
+                        gameStatus={gameStatus}
                     />
                 );
             case 'history':

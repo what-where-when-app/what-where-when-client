@@ -37,6 +37,7 @@ export const ControlSidebar = ({
                                }: ControlSidebarProps) => {
 
     const isLive = gameState.status === GameStatuses.LIVE;
+    const isFinished = gameState.status === GameStatuses.FINISHED;
     const isPhaseActive = gameState.phase !== GamePhase.IDLE;
     const isPaused = gameState.isPaused ?? false;
     const isPreparation = gameState.phase === GamePhase.PREPARATION;
@@ -106,11 +107,34 @@ export const ControlSidebar = ({
                 <Box style={{ gap: 12 }}>
                     <Text variant="h2">{gameName || 'Без названия'}</Text>
 
-                    <Box row align="center" justify="space-between" style={[styles.statusPill, {backgroundColor: isLive ? colors.success.light : colors.neutralLight.darkest}]}>
+                    <Box
+                        row
+                        align="center"
+                        justify="space-between"
+                        style={[
+                            styles.statusPill,
+                            {
+                                backgroundColor: isLive
+                                    ? colors.success.light
+                                    : isFinished
+                                        ? colors.highlight.light
+                                        : colors.neutralLight.darkest
+                            }
+                        ]}
+                    >
                         <Text variant="bodyS" style={{ color: colors.neutralDark.darkest }}>
-                            {isLive ? 'Игра идет' : 'Игра не начата'}
+                            {isLive ? 'Игра идет' : isFinished ? 'Игра завершена' : 'Игра не начата'}
                         </Text>
-                        <View style={[styles.statusDot, { backgroundColor: isLive ? colors.success.medium : colors.neutralDark.lightest }]} />
+                        <View style={[
+                            styles.statusDot,
+                            {
+                                backgroundColor: isLive
+                                    ? colors.success.medium
+                                    : isFinished
+                                        ? colors.highlight.darkest
+                                        : colors.neutralDark.lightest
+                            }
+                        ]} />
                     </Box>
 
                     <Box style={styles.codeBlock} row align="center" justify="space-between">
@@ -138,73 +162,84 @@ export const ControlSidebar = ({
             </ScrollView>
 
             <Box style={styles.bottomPanel}>
-
-                <Box row justify="space-between" style={styles.statRow}>
-                    <Text variant="bodyS" style={{ color: colors.neutralDark.medium }}>Получено ответов</Text>
-                    <View style={[styles.badge, currentAnswersCount > 0 && { backgroundColor: colors.highlight.darkest }]}>
-                        <Text style={styles.badgeText}>{currentAnswersCount}</Text>
-                    </View>
-                </Box>
-
-                <Box style={{ gap: 12, marginTop: 16 }}>
-                    <Box row justify="space-between" align="center">
-                        <Text variant="h4">Вопрос {gameState.activeQuestionNumber || 0} из {totalQuestions}</Text>
-                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.neutralDark.medium }}>{currentRound?.name || 'Раунд 1'}</Text>
-                    </Box>
-
-                    <Box row justify="space-between" align="center">
-                        <Text style={{ fontSize: 12, color: isTimerTicking && gameState.seconds <= 10 ? colors.error.medium : colors.neutralDark.medium }}>
-                            {isPhaseActive ? `Осталось ${gameState.seconds} сек` : 'Время вышло'}
-                        </Text>
-                        <Text style={{ fontSize: 12, color: colors.neutralDark.dark, fontWeight: '600' }}>
-                            {getPhaseText(gameState.phase)}
+                {isFinished ? (
+                    <Box align="center" style={{ gap: 8, paddingVertical: 20 }}>
+                        <Feather name="flag" size={32} color={colors.highlight.darkest} />
+                        <Text variant="h3" style={{ color: colors.neutralDark.darkest }}>Игра окончена</Text>
+                        <Text variant="bodyM" style={{ color: colors.neutralDark.medium, textAlign: 'center' }}>
+                            Все вопросы отыграны. Вы можете просмотреть ответы и итоговую таблицу.
                         </Text>
                     </Box>
+                ) : (
+                    <>
+                        <Box row justify="space-between" style={styles.statRow}>
+                            <Text variant="bodyS" style={{ color: colors.neutralDark.medium }}>Получено ответов</Text>
+                            <View style={[styles.badge, currentAnswersCount > 0 && { backgroundColor: colors.highlight.darkest }]}>
+                                <Text style={styles.badgeText}>{currentAnswersCount}</Text>
+                            </View>
+                        </Box>
 
-                    <TimerBar timeLeft={gameState.seconds} totalTime={currentQuestion?.time_to_think_sec || 60} height={4} />
+                        <Box style={{ gap: 12, marginTop: 16 }}>
+                            <Box row justify="space-between" align="center">
+                                <Text variant="h4">Вопрос {gameState.activeQuestionNumber || 0} из {totalQuestions}</Text>
+                                <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.neutralDark.medium }}>{currentRound?.name || 'Раунд 1'}</Text>
+                            </Box>
 
-                    <Box row justify="space-between" style={{ gap: 6 }}>
-                        <TouchableOpacity style={styles.timeBtn} onPress={() => onAdjustTime?.(-10)}>
-                            <Text style={styles.timeBtnText}>-10 сек</Text>
-                        </TouchableOpacity>
+                            <Box row justify="space-between" align="center">
+                                <Text style={{ fontSize: 12, color: isTimerTicking && gameState.seconds <= 10 ? colors.error.medium : colors.neutralDark.medium }}>
+                                    {isPhaseActive ? `Осталось ${gameState.seconds} сек` : 'Время вышло'}
+                                </Text>
+                                <Text style={{ fontSize: 12, color: colors.neutralDark.dark, fontWeight: '600' }}>
+                                    {getPhaseText(gameState.phase)}
+                                </Text>
+                            </Box>
 
-                        <TouchableOpacity style={[styles.playBtn, isTimerTicking && { backgroundColor: colors.highlight.light }]} onPress={handleStartPress}>
-                            <Feather name={isTimerTicking ? "pause" : "play"} size={16} color={colors.highlight.darkest} />
-                        </TouchableOpacity>
+                            <TimerBar timeLeft={gameState.seconds} totalTime={currentQuestion?.time_to_think_sec || 60} height={4} />
 
-                        <TouchableOpacity style={styles.timeBtn} onPress={() => onAdjustTime?.(10)}>
-                            <Text style={styles.timeBtnText}>+10 сек</Text>
-                        </TouchableOpacity>
-                    </Box>
+                            <Box row justify="space-between" style={{ gap: 6 }}>
+                                <TouchableOpacity style={styles.timeBtn} onPress={() => onAdjustTime?.(-10)}>
+                                    <Text style={styles.timeBtnText}>-10 сек</Text>
+                                </TouchableOpacity>
 
-                    <Box style={{ gap: 6, marginTop: 8 }}>
-                        {!isLive && !isNew && (
-                            <Button title="Начать игру" onPress={onStartGame} variant="primary" />
-                        )}
+                                <TouchableOpacity style={[styles.playBtn, isTimerTicking && { backgroundColor: colors.highlight.light }]} onPress={handleStartPress}>
+                                    <Feather name={isTimerTicking ? "pause" : "play"} size={16} color={colors.highlight.darkest} />
+                                </TouchableOpacity>
 
-                        {isLive && gameState.activeQuestionId && (
-                            <>
-                                <Button
-                                    title={topBtnTitle}
-                                    onPress={topBtnAction}
-                                    variant={topBtnVariant}
-                                />
+                                <TouchableOpacity style={styles.timeBtn} onPress={() => onAdjustTime?.(10)}>
+                                    <Text style={styles.timeBtnText}>+10 сек</Text>
+                                </TouchableOpacity>
+                            </Box>
 
-                                <Box row justify="space-between" style={{ gap: 8, marginTop: 4 }}>
-                                    <View style={{ flex: 1 }}>
-                                        <Button title="< Пред." onPress={onPrevQuestion} variant="tertiary" />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Button title="След. >" onPress={onNextQuestion} variant={nextBtnVariant} />
-                                    </View>
-                                </Box>
-                            </>
-                        )}
-                        {isLive && !gameState.activeQuestionId && (
-                            <Button title="Начать первый вопрос" onPress={onNextQuestion} variant="primary" />
-                        )}
-                    </Box>
-                </Box>
+                            <Box style={{ gap: 6, marginTop: 8 }}>
+                                {!isLive && !isNew && (
+                                    <Button title="Начать игру" onPress={onStartGame} variant="primary" />
+                                )}
+
+                                {isLive && gameState.activeQuestionId && (
+                                    <>
+                                        <Button
+                                            title={topBtnTitle}
+                                            onPress={topBtnAction}
+                                            variant={topBtnVariant}
+                                        />
+
+                                        <Box row justify="space-between" style={{ gap: 8, marginTop: 4 }}>
+                                            <View style={{ flex: 1 }}>
+                                                <Button title="< Пред." onPress={onPrevQuestion} variant="tertiary" />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Button title="След. >" onPress={onNextQuestion} variant={nextBtnVariant} />
+                                            </View>
+                                        </Box>
+                                    </>
+                                )}
+                                {isLive && !gameState.activeQuestionId && (
+                                    <Button title="Начать первый вопрос" onPress={onNextQuestion} variant="primary" />
+                                )}
+                            </Box>
+                        </Box>
+                    </>
+                )}
             </Box>
         </Box>
     );
