@@ -1,0 +1,40 @@
+{
+  "projectId": "50696761-53e9-4cbc-9d50-f9b0a4479a7e",
+  "pkg": "whatwherewhen-ds",
+  "globalName": "WWWUI",
+  "shape": "package",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "componentSrcMap": {
+    "Icon": null,
+    "NumberInput": null
+  },
+  "extraFonts": [
+    "../../.design-sync/fonts.css"
+  ],
+  "readmeHeader": ".design-sync/conventions.md",
+  "overrides": {
+    "Box": { "cardMode": "column" },
+    "Checkbox": { "cardMode": "column" },
+    "NavBar": { "cardMode": "column" },
+    "SwitchListItem": { "cardMode": "column" }
+  },
+  "dtsPropsFor": {
+    "Button": "title: string;\nonPress?: () => void;\nvariant?: \"primary\" | \"secondary\" | \"tertiary\";\nsize?: \"md\";\ndisabled?: boolean;\nloading?: boolean;\nleftIcon?: React.ReactNode;\nrightIcon?: React.ReactNode;",
+    "Text": "variant?: \"h1\" | \"h2\" | \"h3\" | \"h4\" | \"h5\" | \"bodyXL\" | \"bodyL\" | \"bodyM\" | \"bodyS\" | \"bodyXS\" | \"actionL\" | \"actionM\" | \"actionS\" | \"captionM\" | \"muted\";\nchildren?: React.ReactNode;\nnumberOfLines?: number;\nselectable?: boolean;\nstyle?: unknown;",
+    "Card": "title?: string;\nsubtitle?: string;\ndescription?: string;\nheaderImage?: unknown;\nheaderVisual?: React.ReactNode;\ntag?: string;\nbuttonTitle?: string;\nonButtonPress?: () => void;\nstyle?: unknown;",
+    "Box": "p?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\npx?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\npy?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\npt?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\npb?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\nm?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\nmt?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\nmb?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\ngap?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 8 | 16;\nradius?: \"sm\" | \"md\" | \"lg\" | \"xl\";\nbg?: string;\nflex?: number;\nrow?: boolean;\nalign?: \"flex-start\" | \"flex-end\" | \"center\" | \"stretch\" | \"baseline\";\njustify?: \"flex-start\" | \"flex-end\" | \"center\" | \"space-between\" | \"space-around\" | \"space-evenly\";\nwidth?: number | string;\nmaxWidth?: number | string;\nheight?: number | string;\nchildren?: React.ReactNode;\nstyle?: unknown;",
+    "Bullet": "value: number | string;\nvariant?: \"plain\" | \"light\" | \"primary\";\nsize?: \"sm\" | \"md\" | \"lg\";",
+    "Tag": "text?: string;\nvariant?: \"light\" | \"solid\";\nsize?: \"md\";\nleftIcon?: React.ReactNode;\nrightIcon?: React.ReactNode;\nshowText?: boolean;\nstyle?: unknown;",
+    "ListItem": "title: string;\ndescription?: string;\nleft?: React.ReactNode;\nright?: React.ReactNode;\nvariant?: \"default\" | \"highlight\" | \"empty\";\ntitleVariant?: \"h1\" | \"h2\" | \"h3\" | \"h4\" | \"h5\" | \"bodyXL\" | \"bodyL\" | \"bodyM\" | \"bodyS\" | \"bodyXS\" | \"actionL\" | \"actionM\" | \"actionS\" | \"captionM\" | \"muted\";\ntitleStyle?: unknown;\nonPress?: () => void;\nstyle?: unknown;\naccessibilityRole?: string;\naccessibilityState?: unknown;",
+    "CardRow": "title: string;\nsubtitle?: string;\nleftImage?: unknown;\nleftIcon?: React.ReactNode;\nrightButtonTitle?: string;\nonRightButtonPress?: () => void;\nshowChevron?: boolean;\nonPress?: () => void;\nstyle?: unknown;",
+    "SwitchListItem": "title: string;\ndescription?: string;\nvalue: boolean;\nonValueChange: (v: boolean) => void;\ndisabled?: boolean;\nstyle?: unknown;",
+    "RadioButton": "selected: boolean;\nsize?: \"sm\" | \"md\" | \"lg\";\ndisabled?: boolean;",
+    "TextField": "label?: string;\nvalue: string;\nonChangeText: (text: string) => void;\nplaceholder?: string;\nhelperText?: string;\nerrorText?: string;\ndisabled?: boolean;\nleftUnit?: string;\nrightIcon?: React.ReactNode;\nrightIconAccessibilityLabel?: string;\nsecureTextEntry?: boolean;\nonRightIconPress?: () => void;",
+    "TimerBar": "timeLeft: number;\ntotalTime: number;\nheight?: number;",
+    "NavBar": "title: string;\nleftText?: string;\nleftIcon?: React.ReactNode;\nonLeftPress?: () => void;\nrightText?: string;\nrightIcon?: React.ReactNode;\nonRightPress?: () => void;\nstyle?: unknown;",
+    "AuthShell": "children?: React.ReactNode;\nstyle?: unknown;",
+    "Toggle": "value: boolean;\nonValueChange: (v: boolean) => void;\ndisabled?: boolean;\nstyle?: unknown;\nsize?: \"md\" | \"sm\";",
+    "Checkbox": "checked: boolean;\nonChange: (next: boolean) => void;"
+  }
+}

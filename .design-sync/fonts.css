@@ -1,0 +1,40 @@
+/* @font-face rules for the app's brand font (Inter), used by
+   src/theme/typography.ts. The app itself loads these via expo-font's
+   useFonts() at runtime rather than @font-face CSS — this file exists only
+   so design-sync can wire the same real font files (../assets/fonts/) into
+   the uploaded bundle for claude.ai/design previews. */
+
+@font-face {
+  font-family: 'InterRegular';
+  src: url('../assets/fonts/Inter-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'InterMedium';
+  src: url('../assets/fonts/Inter-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'InterSemiBold';
+  src: url('../assets/fonts/Inter-SemiBold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'InterBold';
+  src: url('../assets/fonts/Inter-Bold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'InterExtraBold';
+  src: url('../assets/fonts/Inter-ExtraBold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
