@@ -84,11 +84,10 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
 
         // Ordered by how many teams wrote them, not by similarity to the
         // accepted answer — "matches accepted" is just a badge that can
-        // land on any group, the biggest group is what needs judging most.
+        // land on any group. Judging a group doesn't change its size, so
+        // this order never shifts once a group is judged — a group's place
+        // in the list is fixed as soon as it's formed.
         result.sort((a, b) => {
-            const aJudged = a.status === 'correct' || a.status === 'incorrect';
-            const bJudged = b.status === 'correct' || b.status === 'incorrect';
-            if (aJudged !== bJudged) return aJudged ? 1 : -1;
             if (b.answers.length !== a.answers.length) return b.answers.length - a.answers.length;
             return a.matchesAccepted === b.matchesAccepted ? 0 : a.matchesAccepted ? -1 : 1;
         });
@@ -306,6 +305,54 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                         groups.map((group, index) => {
                             const isCorrect = group.status === 'correct';
                             const isWrong = group.status === 'incorrect';
+
+                            // One team's answer isn't a "group" — no number
+                            // badge, no bulk accept-all, just a plain row
+                            // judged the same way a late answer is.
+                            if (group.answers.length === 1) {
+                                const a = group.answers[0];
+                                return (
+                                    <Box key={group.key} row align="center" style={[styles.lateRow, (isCorrect || isWrong) && styles.groupCardJudged]}>
+                                        <Text style={{ width: 130, fontWeight: '600', fontSize: 14, color: colors.neutralDark.darkest }} numberOfLines={1}>
+                                            {a.teamName}
+                                        </Text>
+                                        <Box row align="center" style={{ flex: 1, gap: 10, flexWrap: 'wrap' }}>
+                                            <Text style={{ fontSize: 15, color: colors.neutralDark.darkest }}>
+                                                {group.displayText || t("hostAnswersDashboard.noAnswerText")}
+                                            </Text>
+                                            {group.matchesAccepted && (
+                                                <Box style={[styles.tag, styles.tagGreen]}>
+                                                    <Text style={[styles.tagText, styles.tagTextGreen]}>
+                                                        {t("hostAnswersDashboard.matchesAccepted")}
+                                                    </Text>
+                                                </Box>
+                                            )}
+                                            {group.charactersOff != null && (
+                                                <Box style={[styles.tag, styles.tagOrange]}>
+                                                    <Text style={[styles.tagText, styles.tagTextOrange]}>
+                                                        {t("hostAnswersDashboard.charactersOff", { count: group.charactersOff })}
+                                                    </Text>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                        <Box row style={{ gap: 8 }}>
+                                            <TouchableOpacity
+                                                style={[styles.lateActionCircle, isWrong && styles.actionCircleWrong]}
+                                                onPress={() => onJudge(a.id, AnswerStatus.INCORRECT)}
+                                            >
+                                                <Feather name="x" size={15} color={isWrong ? '#fff' : colors.neutralDark.medium} />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[styles.lateActionCircle, isCorrect && styles.actionCircleCorrect]}
+                                                onPress={() => onJudge(a.id, AnswerStatus.CORRECT)}
+                                            >
+                                                <Feather name="check" size={15} color={isCorrect ? '#fff' : colors.neutralDark.medium} />
+                                            </TouchableOpacity>
+                                        </Box>
+                                    </Box>
+                                );
+                            }
+
                             // The biggest (unjudged) group gets the prominent
                             // treatment — "matches accepted" is a separate
                             // badge that can land on any group, big or small.
