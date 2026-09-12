@@ -344,6 +344,7 @@
     "noAnswerText": "Vastuse tekst puudub",
     "matchesAccepted": "Vastab õigele vastusele",
     "charactersOff": "Erinevus: {{count}} täht(e)",
+    "accept": "Kinnita",
     "acceptAll": "Kinnita kõik ({{count}})",
     "lateSectionBadge": "Hilinenud · {{count}}",
     "lateSectionTitle": "Hinnatakse ükshaaval, kunagi ei grupeerita",

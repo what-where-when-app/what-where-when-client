@@ -323,53 +323,6 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                             const isCorrect = group.status === 'correct';
                             const isWrong = group.status === 'incorrect';
 
-                            // One team's answer isn't a "group" — no number
-                            // badge, no bulk accept-all, just a plain row
-                            // judged the same way a late answer is.
-                            if (group.answers.length === 1) {
-                                const a = group.answers[0];
-                                return (
-                                    <Box key={group.key} row align="center" style={[styles.lateRow, (isCorrect || isWrong) && styles.groupCardJudged]}>
-                                        <Text style={{ width: 130, fontWeight: '600', fontSize: 14, color: colors.neutralDark.darkest }} numberOfLines={1}>
-                                            {a.teamName}
-                                        </Text>
-                                        <Box row align="center" style={{ flex: 1, gap: 10, flexWrap: 'wrap' }}>
-                                            <Text style={{ fontSize: 15, color: colors.neutralDark.darkest }}>
-                                                {group.displayText || t("hostAnswersDashboard.noAnswerText")}
-                                            </Text>
-                                            {group.matchesAccepted && (
-                                                <Box style={[styles.tag, styles.tagGreen]}>
-                                                    <Text style={[styles.tagText, styles.tagTextGreen]}>
-                                                        {t("hostAnswersDashboard.matchesAccepted")}
-                                                    </Text>
-                                                </Box>
-                                            )}
-                                            {group.charactersOff != null && (
-                                                <Box style={[styles.tag, styles.tagOrange]}>
-                                                    <Text style={[styles.tagText, styles.tagTextOrange]}>
-                                                        {t("hostAnswersDashboard.charactersOff", { count: group.charactersOff })}
-                                                    </Text>
-                                                </Box>
-                                            )}
-                                        </Box>
-                                        <Box row style={{ gap: 8 }}>
-                                            <TouchableOpacity
-                                                style={[styles.lateActionCircle, isWrong && styles.actionCircleWrong]}
-                                                onPress={() => onJudge(a.id, AnswerStatus.INCORRECT)}
-                                            >
-                                                <Feather name="x" size={15} color={isWrong ? '#fff' : colors.neutralDark.medium} />
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.lateActionCircle, isCorrect && styles.actionCircleCorrect]}
-                                                onPress={() => onJudge(a.id, AnswerStatus.CORRECT)}
-                                            >
-                                                <Feather name="check" size={15} color={isCorrect ? '#fff' : colors.neutralDark.medium} />
-                                            </TouchableOpacity>
-                                        </Box>
-                                    </Box>
-                                );
-                            }
-
                             // The biggest (unjudged) group gets the prominent
                             // treatment — "matches accepted" is a separate
                             // badge that can land on any group, big or small.
@@ -450,7 +403,9 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                             >
                                                 <Feather name="check" size={16} color={acceptFilled ? '#fff' : colors.success.dark} />
                                                 <Text style={{ fontWeight: '800', fontSize: 14, color: acceptFilled ? '#fff' : colors.success.dark }}>
-                                                    {t("hostAnswersDashboard.acceptAll", { count: group.answers.length })}
+                                                    {group.answers.length === 1
+                                                        ? t("hostAnswersDashboard.accept")
+                                                        : t("hostAnswersDashboard.acceptAll", { count: group.answers.length })}
                                                 </Text>
                                             </TouchableOpacity>
                                         </Box>

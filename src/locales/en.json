@@ -344,6 +344,7 @@
     "noAnswerText": "No answer text",
     "matchesAccepted": "Matches accepted answer",
     "charactersOff": "{{count}} character(s) off",
+    "accept": "Accept",
     "acceptAll": "Accept all {{count}}",
     "lateSectionBadge": "Late · {{count}}",
     "lateSectionTitle": "Judged one by one, never grouped",

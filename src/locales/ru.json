@@ -344,6 +344,7 @@
     "noAnswerText": "Без текста ответа",
     "matchesAccepted": "Совпадает с принятым ответом",
     "charactersOff": "Отличие: {{count}} симв.",
+    "accept": "Принять",
     "acceptAll": "Принять все ({{count}})",
     "lateSectionBadge": "Опоздавшие · {{count}}",
     "lateSectionTitle": "Судятся по одному, никогда не группируются",
