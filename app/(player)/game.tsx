@@ -274,9 +274,6 @@ export default function GameScreen() {
                         <PlayerSnackbar
                             notifications={notifications}
                             onDismiss={dismissNotification}
-                            bottomOffset={
-                                (hasGameStarted || gameStarted) && !isKeyboardVisible ? 100 : 24
-                            }
                         />
 
                     </Box>
