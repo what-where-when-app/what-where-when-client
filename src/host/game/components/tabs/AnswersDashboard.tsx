@@ -247,18 +247,45 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                             </Box>
 
                                             <Box row style={{ gap: 8, flexWrap: 'wrap' }}>
-                                                {group.answers.map(a => (
-                                                    <Box key={a.id} style={[styles.teamPill, !!a.lateBySeconds && styles.teamPillLate]}>
-                                                        <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
-                                                            {a.teamName}
-                                                            {!!a.lateBySeconds && (
-                                                                <Text style={{ fontSize: 11, color: colors.error.dark }}>
-                                                                    {'  '}{t("hostAnswersDashboard.lateBy", { seconds: a.lateBySeconds })}
-                                                                </Text>
+                                                {group.answers.map(a => {
+                                                    const memberCorrect = a.status === AnswerStatus.CORRECT;
+                                                    const memberWrong = a.status === AnswerStatus.INCORRECT;
+
+                                                    return (
+                                                        <Box
+                                                            key={a.id}
+                                                            row
+                                                            align="center"
+                                                            style={[styles.teamPill, !!a.lateBySeconds && styles.teamPillLate]}
+                                                        >
+                                                            <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
+                                                                {a.teamName}
+                                                                {!!a.lateBySeconds && (
+                                                                    <Text style={{ fontSize: 11, color: colors.error.dark }}>
+                                                                        {'  '}{t("hostAnswersDashboard.lateBy", { seconds: a.lateBySeconds })}
+                                                                    </Text>
+                                                                )}
+                                                            </Text>
+
+                                                            {group.answers.length > 1 && (
+                                                                <Box row align="center" style={{ gap: 4, marginLeft: 8 }}>
+                                                                    <TouchableOpacity
+                                                                        style={[styles.miniActionCircle, memberWrong && styles.actionCircleWrong]}
+                                                                        onPress={() => onJudge(a.id, AnswerStatus.INCORRECT)}
+                                                                    >
+                                                                        <Feather name="x" size={11} color={memberWrong ? '#fff' : colors.neutralDark.medium} />
+                                                                    </TouchableOpacity>
+                                                                    <TouchableOpacity
+                                                                        style={[styles.miniActionCircle, memberCorrect && styles.actionCircleCorrect]}
+                                                                        onPress={() => onJudge(a.id, AnswerStatus.CORRECT)}
+                                                                    >
+                                                                        <Feather name="check" size={11} color={memberCorrect ? '#fff' : colors.neutralDark.medium} />
+                                                                    </TouchableOpacity>
+                                                                </Box>
                                                             )}
-                                                        </Text>
-                                                    </Box>
-                                                ))}
+                                                        </Box>
+                                                    );
+                                                })}
                                             </Box>
                                         </Box>
 
@@ -349,6 +376,11 @@ const styles = StyleSheet.create({
     },
     actionCircleCorrect: { backgroundColor: colors.success.medium },
     actionCircleWrong: { backgroundColor: colors.error.medium },
+    miniActionCircle: {
+        width: 20, height: 20, borderRadius: 10,
+        backgroundColor: colors.neutralLight.medium,
+        justifyContent: 'center', alignItems: 'center'
+    },
     badge: {
         paddingHorizontal: 16, paddingVertical: 8,
         borderRadius: 12, borderWidth: 1
