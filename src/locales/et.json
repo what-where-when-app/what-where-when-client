@@ -45,7 +45,8 @@
         "thinking": "Aruteluaeg",
         "answering": "Vastamise aeg",
         "preparation": "Tähelepanu, küsimus...",
-        "idle": "Ootan..."
+        "idle": "Ootan...",
+        "paused": "Juht pausis mängu"
       }
     },
     "tabs": {
@@ -80,6 +81,7 @@
     "idleTitle": "Ootan juhti",
     "preparationSubtitle": "Tähelepanu, küsimust loetakse...",
     "questionTitle": "Küsimus {{n}}",
+    "paused": "Juht pani taimeri pausile. Palun oota...",
     "timerRunning": "{{seconds}} s · {{hint}}",
     "hintThinking": "arutelu võistkonnaga",
     "hintAnswering": "kirjuta oma vastus!",
@@ -159,11 +161,24 @@
     "loadError": "Mänge ei saanud laadida.",
     "openGame": "Ava"
   },
+  "playerNotifications": {
+    "genericError": "Midagi läks valesti. Palun proovi uuesti.",
+    "connectionLost": "Ühendus katkes. Ühendan uuesti…",
+    "backOnline": "Uuesti ühendatud"
+  },
+  "hostNotifications": {
+    "genericError": "Midagi läks valesti. Palun proovi uuesti.",
+    "noMoreQuestions": "See oli viimane küsimus. Vajuta \"Lõpeta mäng\", et mäng lõpetada."
+  },
   "hostGameAdmin": {
     "createTitle": "Loo mäng",
     "manageTitle": "Halda mängu",
     "save": "Salvesta",
     "finishGame": "Lõpeta mäng",
+    "unsavedChangesTitle": "Loobuda salvestamata muudatustest?",
+    "unsavedChangesBody": "Sul on salvestamata muudatusi. Kui lahkud nüüd, lähevad need kaotsi.",
+    "unsavedChangesCancel": "Jätka muutmist",
+    "unsavedChangesDiscard": "Loobu muudatustest",
     "tabs": {
       "settings": "Seaded",
       "answers": "Vastused",
@@ -202,6 +217,9 @@
     "startGame": "Alusta mängu",
     "prev": "< Eelmine",
     "next": "Järgmine >",
+    "startBlockedUnsaved": "Salvesta muudatused enne mängu alustamist.",
+    "startBlockedNoQuestions": "Lisa vähemalt üks küsimus enne mängu alustamist.",
+    "startBlockedNoTeams": "Lisa vähemalt üks võistkond enne mängu alustamist.",
     "startFirstQuestion": "Alusta esimest küsimust",
     "timerStart": "Käivita taimer",
     "finishQuestion": "Lõpeta küsimus",
@@ -209,7 +227,15 @@
   },
   "hostEditor": {
     "createGame": "Loo mäng",
-    "saveAllChanges": "Salvesta kõik muudatused"
+    "saveAllChanges": "Salvesta kõik muudatused",
+    "lockedTitle": "See mäng on lõppenud",
+    "lockedBody": "Lõppenud mänge ei saa enam muuta, et lõpptulemused jääksid muutmata.",
+    "liveEditNotice": "See mäng käib praegu. Seda saab siiski muuta, kuid juba mängitud (või praegu aktiivset) vooru või küsimust ei saa muuta ega kustutada.",
+    "loadFailedTitle": "Mängu laadimine ebaõnnestus",
+    "loadFailedBody": "Laadimisel läks midagi valesti. Palun proovi uuesti.",
+    "retry": "Proovi uuesti",
+    "saveStatusSaving": "Salvestamine…",
+    "saveStatusError": "Salvestamine ebaõnnestus — proovi uuesti"
   },
   "hostEditorCategories": {
     "title": "Kategooriad",

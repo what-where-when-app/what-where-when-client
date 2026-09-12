@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Alert, Platform, StyleSheet, TouchableOpacity, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,8 @@ import { useGameEditor } from "@/src/host/game/components/tabs/editor/state";
 import { ControlSidebar } from "@/src/host/game/components/ControlSidebar";
 import { EditorContent } from "@/src/host/game/components/tabs/EditorContent";
 import { useHostGame } from "@/src/host/game/hooks/useHostGame";
+import { HostNotifications } from "@/src/host/game/components/HostNotifications";
+import { EditorSaveStatus } from "@/src/host/game/components/EditorSaveStatus";
 import { AnswersDashboard } from "@/src/host/game/components/tabs/AnswersDashboard";
 import { GameStatuses } from "@/src/dto/common.dto";
 import { HostLeaderboard } from "@/src/host/game/components/tabs/HostLeaderboard";
@@ -43,7 +45,9 @@ export default function GameAdminScreen() {
         stopQuestion,
         finishGame,
         judgeAnswer,
-        adjustTime
+        adjustTime,
+        notifications,
+        dismissNotification
     } = useHostGame(Number(gameId));
 
     const tabs = useMemo(() => {
@@ -114,13 +118,46 @@ export default function GameAdminScreen() {
         });
     }, [activeTab, editor.isNew, gameId]);
 
-    const handleBack = () => {
+    const confirmDiscardChanges = (): Promise<boolean> => {
+        if (Platform.OS === 'web') {
+            return Promise.resolve(
+                typeof window !== 'undefined'
+                    ? window.confirm(t("hostGameAdmin.unsavedChangesBody"))
+                    : true
+            );
+        }
+        return new Promise((resolve) => {
+            Alert.alert(
+                t("hostGameAdmin.unsavedChangesTitle"),
+                t("hostGameAdmin.unsavedChangesBody"),
+                [
+                    { text: t("hostGameAdmin.unsavedChangesCancel"), style: 'cancel', onPress: () => resolve(false) },
+                    { text: t("hostGameAdmin.unsavedChangesDiscard"), style: 'destructive', onPress: () => resolve(true) },
+                ],
+                { cancelable: true, onDismiss: () => resolve(false) }
+            );
+        });
+    };
+
+    const handleBack = async () => {
         void mixpanel.track("Host Game Back Clicked", {
             game_id: gameId && gameId !== "new" ? Number(gameId) : undefined,
             is_new: editor.isNew,
             active_tab: activeTab,
             game_status: String(gameState.status),
+            is_dirty: editor.isDirty,
         });
+
+        if (editor.isDirty) {
+            const confirmed = await confirmDiscardChanges();
+            if (!confirmed) {
+                void mixpanel.track("Host Game Back Cancelled Unsaved", {
+                    game_id: gameId && gameId !== "new" ? Number(gameId) : undefined,
+                });
+                return;
+            }
+        }
+
         if (router.canGoBack()) {
             router.back();
         } else {
@@ -157,6 +194,7 @@ export default function GameAdminScreen() {
 
     return (
         <Box style={styles.screen}>
+            <HostNotifications notifications={notifications} onDismiss={dismissNotification} />
             <Box style={styles.layout}>
 
                 {!editor.isNew && (
@@ -177,6 +215,8 @@ export default function GameAdminScreen() {
                             onFinishGame={finishGame}
                             onAdjustTime={adjustTime}
                             participants={participants}
+                            teamsCount={editor.draft.teams?.length ?? 0}
+                            isDirty={editor.isDirty}
                             gameState={gameState}
                             gameName={editor.loaded?.title}
                         />
@@ -264,6 +304,14 @@ export default function GameAdminScreen() {
                                 </>
                             )}
                         </Box>
+
+                        {!editor.isNew && editor.loaded && (
+                            <EditorSaveStatus
+                                isSubmitting={editor.isSubmitting}
+                                saveError={editor.saveError}
+                                onRetry={editor.primaryAction}
+                            />
+                        )}
                     </Box>
                 )}
             </Box>

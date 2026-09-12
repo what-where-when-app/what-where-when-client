@@ -23,11 +23,13 @@ interface PlayTabProps {
     timer: number;
     totalTime: number;
     history: AnswerDomain[];
+    activeQuestionId?: number | null;
     questionNumber?: number | null;
     submitAnswer: (answer: string) => void;
     lastAnswerStatus?: 'success' | 'error' | null;
     gameStatus?: GameStatus | null;
     participantId: number | null;
+    isPaused?: boolean;
 }
 
 export const PlayTab = ({
@@ -35,17 +37,23 @@ export const PlayTab = ({
                             timer,
                             totalTime,
                             history,
+                            activeQuestionId,
                             questionNumber,
                             submitAnswer,
                             lastAnswerStatus,
                             gameStatus,
                             participantId,
+                            isPaused,
                         }: PlayTabProps) => {
     const { t } = useTranslation();
 
+    // questionNumber is only unique within a round (resets every round) —
+    // matching by it alone would show a stale answer from an earlier round's
+    // question that happens to share the same per-round number. questionId
+    // is the real, globally unique identity of the active question.
     const savedAnswer = React.useMemo(() => {
-        return history.find(a => a.questionNumber === questionNumber) || null;
-    }, [history, questionNumber]);
+        return history.find(a => a.questionId === activeQuestionId) || null;
+    }, [history, activeQuestionId]);
 
     const [answer, setAnswer] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,18 +168,24 @@ export const PlayTab = ({
                     <Text
                         variant="bodyM"
                         style={{
-                            color: timer === 0 ? colors.error.medium : colors.neutralDark.medium,
+                            color: isPaused
+                                ? colors.highlight.darkest
+                                : timer === 0
+                                    ? colors.error.medium
+                                    : colors.neutralDark.medium,
                         }}
                     >
-                        {timer > 0
-                            ? t('playTab.timerRunning', {
-                                seconds: timer,
-                                hint:
-                                    phase === GamePhase.THINKING
-                                        ? t('playTab.hintThinking')
-                                        : t('playTab.hintAnswering'),
-                            })
-                            : t('playTab.timeUp')}
+                        {isPaused
+                            ? t('playTab.paused')
+                            : timer > 0
+                                ? t('playTab.timerRunning', {
+                                    seconds: timer,
+                                    hint:
+                                        phase === GamePhase.THINKING
+                                            ? t('playTab.hintThinking')
+                                            : t('playTab.hintAnswering'),
+                                })
+                                : t('playTab.timeUp')}
                     </Text>
                     <TimerBar timeLeft={timer} totalTime={totalTime} />
                 </Box>

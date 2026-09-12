@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSocket } from '@/src/hooks/useSocket';
 import {
     AdminRequestEvent,
@@ -11,8 +12,30 @@ import {
 import { AnswerDomain, GameState, LeaderboardEntry, ParticipantDomain } from "@/src/dto/game.dto";
 import { mixpanel } from "@/src/analytics/mixpanel";
 
+export interface HostNotification {
+    id: string;
+    type: 'error' | 'info';
+    message: string;
+}
+
+const NOTIFICATION_TTL_MS = 6000;
+
 export function useHostGame(gameId: number) {
+    const { t } = useTranslation();
     const socket = useSocket('game');
+
+    const [notifications, setNotifications] = useState<HostNotification[]>([]);
+    const notificationIdRef = useRef(0);
+
+    const dismissNotification = useCallback((id: string) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    }, []);
+
+    const pushNotification = useCallback((type: HostNotification['type'], message: string) => {
+        const id = `${Date.now()}-${notificationIdRef.current++}`;
+        setNotifications(prev => [...prev, { id, type, message }]);
+        setTimeout(() => dismissNotification(id), NOTIFICATION_TTL_MS);
+    }, [dismissNotification]);
 
     const [gameState, setGameState] = useState<GameState>({
         phase: GamePhase.IDLE,
@@ -72,8 +95,20 @@ export function useHostGame(gameId: number) {
     useEffect(() => {
         if (!socket || !gameId || isNaN(gameId)) return;
 
-        socket.emit(AdminRequestEvent.Sync, { gameId });
-        void mixpanel.track("Host Admin Sync Emitted", { game_id: gameId });
+        // Re-sync on every connect, not just the first one: socket.io-client
+        // keeps the same Socket instance across automatic reconnects (network
+        // blips, app backgrounded/foregrounded), but the server treats each
+        // reconnect as a brand-new connection and forgets prior room
+        // membership. Without re-emitting Sync here, the host would stop
+        // receiving TimerUpdate/StatusChanged/AnswerUpdate/LeaderboardUpdate
+        // silently after any reconnect.
+        const syncAdmin = () => {
+            socket.emit(AdminRequestEvent.Sync, { gameId });
+            void mixpanel.track("Host Admin Sync Emitted", { game_id: gameId });
+        };
+
+        socket.on('connect', syncAdmin);
+        if (socket.connected) syncAdmin();
 
         socket.on(GameBroadcastEvent.SyncState, (data: {
             state: GameState,
@@ -157,7 +192,19 @@ export function useHostGame(gameId: number) {
             setLeaderboard(data);
         });
 
+        // WsExceptionsFilter is the server's only channel for surfacing
+        // failed admin actions (forbidden, judging too early, unexpected
+        // errors) — without this listener they fail completely silently.
+        socket.on('error', (err: { message?: string }) => {
+            pushNotification('error', err?.message || t('hostNotifications.genericError'));
+        });
+
+        socket.on(AdminResponseEvent.NoMoreQuestions, () => {
+            pushNotification('info', t('hostNotifications.noMoreQuestions'));
+        });
+
         return () => {
+            socket.off('connect', syncAdmin);
             socket.off(GameBroadcastEvent.SyncState);
             socket.off(AdminResponseEvent.AnswerUpdate);
             socket.off(GameBroadcastEvent.TimerUpdate);
@@ -165,8 +212,10 @@ export function useHostGame(gameId: number) {
             socket.off(GameBroadcastEvent.TimerPaused);
             socket.off(GameBroadcastEvent.TimerResumed);
             socket.off(GameBroadcastEvent.LeaderboardUpdate);
+            socket.off('error');
+            socket.off(AdminResponseEvent.NoMoreQuestions);
         };
-    }, [socket, gameId, trackStateTransitions]);
+    }, [socket, gameId, trackStateTransitions, pushNotification, t]);
 
     const startGame = useCallback(() => {
         void mixpanel.track("Host Game Start Clicked", { game_id: gameId });
@@ -232,6 +281,8 @@ export function useHostGame(gameId: number) {
         startTimer,
         stopTimer,
         judgeAnswer,
-        adjustTime
+        adjustTime,
+        notifications,
+        dismissNotification
     };
 }

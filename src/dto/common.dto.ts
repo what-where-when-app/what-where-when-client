@@ -60,6 +60,7 @@ export enum AdminRequestEvent {
 export enum AdminResponseEvent {
   AnswerUpdate = 'admin:answer_update',
   NewDispute = 'admin:new_dispute',
+  NoMoreQuestions = 'admin:no_more_questions',
 }
 
 /**

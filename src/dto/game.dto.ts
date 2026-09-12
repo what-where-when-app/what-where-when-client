@@ -127,6 +127,11 @@ export interface GameState {
   isPaused: boolean;
   activeQuestionId?: number;
   activeQuestionNumber?: number;
+  // Position of the active question across the whole game (all rounds).
+  // activeQuestionNumber is only unique per round and resets every round —
+  // use this one for any "Question X of Y" style display.
+  activeGlobalQuestionNumber?: number;
+  totalQuestions?: number;
   status?: GameStatus;
 }
 
