@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
 import { colors } from '@/src/theme/colors';
-import { AnswerDomain } from "@/src/dto/game.dto";
+import { AnswerDomain, ParticipantDomain } from "@/src/dto/game.dto";
 import { AnswerStatus } from "@/src/dto/common.dto";
 import { mixpanel } from "@/src/analytics/mixpanel";
 
@@ -15,14 +15,17 @@ interface Props {
     onJudge: (id: number, verdict: AnswerStatus) => void;
     activeQuestionId?: number;
     totalParticipants?: number;
+    participants?: ParticipantDomain[];
+    onAddManualAnswer?: (questionId: number, participantId: number) => void;
 }
 
-export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, totalParticipants }: Props) => {
+export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, totalParticipants, participants, onAddManualAnswer }: Props) => {
     const { t } = useTranslation();
     const allQuestions = useMemo(() => rounds.flatMap(r => r.questions), [rounds]);
     const [selectedQId, setSelectedQId] = useState<number | null>(() => {
         return activeQuestionId || allQuestions[0]?.id || null;
     });
+    const [showAddPicker, setShowAddPicker] = useState(false);
 
     const currentAnswers = useMemo(() =>
             answers.filter(a => a.questionId === selectedQId),
@@ -96,23 +99,86 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, t
                     </Box>
                 </Box>
 
-                <Box row align="center" style={{ marginBottom: 10, gap: 16, flexWrap: 'wrap' }}>
-                    <Box row align="center" style={[styles.badge, styles.badgeBlue]}>
-                        <Text style={[styles.badgeText, styles.badgeTextBlue]}>
-                            {t("hostAnswersDashboard.total", { count: currentAnswers.length })}
-                        </Text>
+                <Box row justify="space-between" align="center" style={{ marginBottom: 10, gap: 16, flexWrap: 'wrap' }}>
+                    <Box row align="center" style={{ gap: 16, flexWrap: 'wrap' }}>
+                        <Box row align="center" style={[styles.badge, styles.badgeBlue]}>
+                            <Text style={[styles.badgeText, styles.badgeTextBlue]}>
+                                {t("hostAnswersDashboard.total", { count: currentAnswers.length })}
+                            </Text>
+                        </Box>
+                        <Box row align="center" style={[styles.badge, styles.badgeGreen]}>
+                            <Text style={[styles.badgeText, styles.badgeTextGreen]}>
+                                {t("hostAnswersDashboard.correct", { count: correctCount })}
+                            </Text>
+                        </Box>
+                        <Box row align="center" style={[styles.badge, styles.badgeRed]}>
+                            <Text style={[styles.badgeText, styles.badgeTextRed]}>
+                                {t("hostAnswersDashboard.incorrect", { count: incorrectCount })}
+                            </Text>
+                        </Box>
                     </Box>
-                    <Box row align="center" style={[styles.badge, styles.badgeGreen]}>
-                        <Text style={[styles.badgeText, styles.badgeTextGreen]}>
-                            {t("hostAnswersDashboard.correct", { count: correctCount })}
-                        </Text>
-                    </Box>
-                    <Box row align="center" style={[styles.badge, styles.badgeRed]}>
-                        <Text style={[styles.badgeText, styles.badgeTextRed]}>
-                            {t("hostAnswersDashboard.incorrect", { count: incorrectCount })}
-                        </Text>
-                    </Box>
+
+                    {!!onAddManualAnswer && !!selectedQId && (
+                        <TouchableOpacity
+                            onPress={() => setShowAddPicker(v => !v)}
+                            style={styles.addTeamButton}
+                        >
+                            <Text style={styles.addTeamButtonText}>
+                                {t("hostAnswersDashboard.addTeamButton")}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </Box>
+
+                {showAddPicker && !!selectedQId && (
+                    <Box style={styles.addTeamPanel}>
+                        <Text variant="captionM" style={{ color: colors.neutralDark.medium, marginBottom: 10 }}>
+                            {t("hostAnswersDashboard.addTeamPickerTitle")}
+                        </Text>
+
+                        <Box row style={{ flexWrap: 'wrap', gap: 10 }}>
+                            {(participants || []).length === 0 ? (
+                                <Text variant="bodyS" style={{ color: colors.neutralDark.light }}>
+                                    {t("hostAnswersDashboard.addTeamEmpty")}
+                                </Text>
+                            ) : (
+                                [...(participants || [])]
+                                    .sort((a, b) => {
+                                        const aAnswered = currentAnswers.some(ans => ans.participantId === a.id);
+                                        const bAnswered = currentAnswers.some(ans => ans.participantId === b.id);
+                                        return Number(aAnswered) - Number(bAnswered);
+                                    })
+                                    .map(p => {
+                                    const alreadyAnswered = currentAnswers.some(a => a.participantId === p.id);
+                                    return (
+                                        <TouchableOpacity
+                                            key={p.id}
+                                            disabled={alreadyAnswered}
+                                            onPress={() => {
+                                                void mixpanel.track("Host Manual Answer Team Picked", {
+                                                    question_id: selectedQId,
+                                                    participant_id: p.id,
+                                                });
+                                                onAddManualAnswer?.(selectedQId, p.id);
+                                                setShowAddPicker(false);
+                                            }}
+                                            style={[styles.teamChip, alreadyAnswered && styles.teamChipDisabled]}
+                                        >
+                                            <Text style={{ color: alreadyAnswered ? colors.neutralDark.light : colors.neutralDark.darkest }}>
+                                                {p.teamName}
+                                            </Text>
+                                            {alreadyAnswered && (
+                                                <Text style={styles.teamChipHint}>
+                                                    {t("hostAnswersDashboard.addTeamAlreadyAnswered")}
+                                                </Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            )}
+                        </Box>
+                    </Box>
+                )}
 
                 <Box row justify="space-between" align="center" style={styles.tableHeader}>
                     <Text variant="captionM" style={{ flex: 1, color: colors.neutralDark.medium }}>{t("hostAnswersDashboard.colTeamName")}</Text>
@@ -257,5 +323,42 @@ const styles = StyleSheet.create({
     },
     badgeTextRed: {
         color: colors.error.dark
+    },
+    addTeamButton: {
+        borderRadius: 20,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: colors.highlight.lightest,
+        borderWidth: 1,
+        borderColor: colors.highlight.light,
+    },
+    addTeamButtonText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: colors.highlight.darkest,
+    },
+    addTeamPanel: {
+        backgroundColor: colors.neutralLight.lightest,
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+    },
+    teamChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        borderRadius: 20,
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderWidth: 1,
+        borderColor: colors.neutralLight.dark,
+        backgroundColor: colors.neutralLight.lightest,
+    },
+    teamChipDisabled: {
+        opacity: 0.5,
+    },
+    teamChipHint: {
+        fontSize: 11,
+        color: colors.neutralDark.light,
     }
 });

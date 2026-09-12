@@ -340,7 +340,11 @@
     "colTeamName": "Team",
     "colAnswerText": "Answer",
     "empty": "No answers yet",
-    "lateBy": "Late: {{seconds}} s"
+    "lateBy": "Late: {{seconds}} s",
+    "addTeamButton": "+ Add answer",
+    "addTeamPickerTitle": "Select the team this answer belongs to",
+    "addTeamAlreadyAnswered": "already answered",
+    "addTeamEmpty": "No teams in this game yet"
   },
   "hostForgotPassword": {
     "screenTitle": "Forgot password?",

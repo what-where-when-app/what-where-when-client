@@ -45,6 +45,7 @@ export default function GameAdminScreen() {
         stopQuestion,
         finishGame,
         judgeAnswer,
+        addManualAnswer,
         adjustTime,
         notifications,
         dismissNotification
@@ -287,6 +288,8 @@ export default function GameAdminScreen() {
                                             onJudge={judgeAnswer}
                                             activeQuestionId={gameState.activeQuestionId}
                                             totalParticipants={participants.length}
+                                            participants={participants}
+                                            onAddManualAnswer={addManualAnswer}
                                         />
                                     )}
 
