@@ -341,10 +341,17 @@
     "colAnswerText": "Answer",
     "empty": "No answers yet",
     "lateBy": "Late: {{seconds}} s",
-    "lateCount": "{{count}} late",
     "noAnswerText": "No answer text",
     "matchesAccepted": "Matches accepted answer",
-    "charactersOff": "{{count}} character(s) off"
+    "charactersOff": "{{count}} character(s) off",
+    "acceptAll": "Accept all {{count}}",
+    "lateSectionBadge": "Late · {{count}}",
+    "lateSectionTitle": "Judged one by one, never grouped",
+    "acceptUnderLabel": "Accept under (s)",
+    "acceptUnderButton": "Accept",
+    "rejectAllLate": "Reject all late",
+    "matchesAcceptedHint": "matches accepted",
+    "matchesGroupHint": "matches group {{index}}"
   },
   "hostForgotPassword": {
     "screenTitle": "Forgot password?",

@@ -341,10 +341,17 @@
     "colAnswerText": "Vastus",
     "empty": "Vastuseid pole veel",
     "lateBy": "Hilines: {{seconds}} s",
-    "lateCount": "Hilinenuid: {{count}}",
     "noAnswerText": "Vastuse tekst puudub",
     "matchesAccepted": "Vastab õigele vastusele",
-    "charactersOff": "Erinevus: {{count}} täht(e)"
+    "charactersOff": "Erinevus: {{count}} täht(e)",
+    "acceptAll": "Kinnita kõik ({{count}})",
+    "lateSectionBadge": "Hilinenud · {{count}}",
+    "lateSectionTitle": "Hinnatakse ükshaaval, kunagi ei grupeerita",
+    "acceptUnderLabel": "Kinnita alla (s)",
+    "acceptUnderButton": "Kinnita",
+    "rejectAllLate": "Lükka kõik hilinenud tagasi",
+    "matchesAcceptedHint": "vastab õigele",
+    "matchesGroupHint": "vastab grupile {{index}}"
   },
   "hostForgotPassword": {
     "screenTitle": "Unustasid parooli?",

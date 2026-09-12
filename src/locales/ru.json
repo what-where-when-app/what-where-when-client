@@ -341,10 +341,17 @@
     "colAnswerText": "Текст ответа",
     "empty": "Пока нет ответов от команд",
     "lateBy": "Опоздание: {{seconds}} с",
-    "lateCount": "Опоздавших: {{count}}",
     "noAnswerText": "Без текста ответа",
     "matchesAccepted": "Совпадает с принятым ответом",
-    "charactersOff": "Отличие: {{count}} симв."
+    "charactersOff": "Отличие: {{count}} симв.",
+    "acceptAll": "Принять все ({{count}})",
+    "lateSectionBadge": "Опоздавшие · {{count}}",
+    "lateSectionTitle": "Судятся по одному, никогда не группируются",
+    "acceptUnderLabel": "Принять быстрее (с)",
+    "acceptUnderButton": "Принять",
+    "rejectAllLate": "Отклонить все опоздавшие",
+    "matchesAcceptedHint": "совпадает с принятым",
+    "matchesGroupHint": "совпадает с группой {{index}}"
   },
   "hostForgotPassword": {
     "screenTitle": "Забыли пароль?",
