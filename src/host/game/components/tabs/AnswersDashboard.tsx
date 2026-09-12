@@ -4,7 +4,6 @@ import { Feather } from '@expo/vector-icons';
 import { useTranslation } from "react-i18next";
 import { Box } from '@/src/ui/Box';
 import { Text } from '@/src/ui/Text';
-import { TextField } from '@/src/ui/TextField';
 import { colors } from '@/src/theme/colors';
 import { AnswerDomain } from "@/src/dto/game.dto";
 import { AnswerStatus } from "@/src/dto/common.dto";
@@ -30,13 +29,14 @@ interface AnswerGroup {
 
 type QuestionStatus = 'notPlayed' | 'waiting' | 'judged';
 
+const ACCEPT_LATE_UNDER_SECONDS = 2;
+
 export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, activeQuestionId, totalParticipants }: Props) => {
     const { t } = useTranslation();
     const allQuestions = useMemo(() => rounds.flatMap(r => r.questions), [rounds]);
     const [selectedQId, setSelectedQId] = useState<number | null>(() => {
         return activeQuestionId || allQuestions[0]?.id || null;
     });
-    const [lateThreshold, setLateThreshold] = useState('');
 
     const currentAnswers = useMemo(() =>
             answers.filter(a => a.questionId === selectedQId),
@@ -143,11 +143,9 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
     };
 
     const acceptLateUnderThreshold = () => {
-        const threshold = parseFloat(lateThreshold);
-        if (!Number.isFinite(threshold) || threshold <= 0) return;
-        const ids = lateAnswers.filter(a => (a.lateBySeconds ?? 0) < threshold).map(a => a.id);
+        const ids = lateAnswers.filter(a => (a.lateBySeconds ?? 0) < ACCEPT_LATE_UNDER_SECONDS).map(a => a.id);
         if (ids.length === 0) return;
-        judgeIds(ids, AnswerStatus.CORRECT, { late_bulk: 'under_threshold', threshold_seconds: threshold });
+        judgeIds(ids, AnswerStatus.CORRECT, { late_bulk: 'under_threshold', threshold_seconds: ACCEPT_LATE_UNDER_SECONDS });
     };
 
     const rejectAllLate = () => {
@@ -405,24 +403,11 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
 
                                 <Box style={{ flex: 1 }} />
 
-                                <Box row align="center" style={{ gap: 8 }}>
-                                    <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
-                                        {t("hostAnswersDashboard.acceptUnderLabel")}
+                                <TouchableOpacity onPress={acceptLateUnderThreshold}>
+                                    <Text style={styles.lateSectionLink}>
+                                        {t("hostAnswersDashboard.acceptUnderButton", { seconds: ACCEPT_LATE_UNDER_SECONDS })}
                                     </Text>
-                                    <Box style={{ width: 56 }}>
-                                        <TextField
-                                            value={lateThreshold}
-                                            onChangeText={setLateThreshold}
-                                            placeholder="2"
-                                            keyboardType="numeric"
-                                        />
-                                    </Box>
-                                    <TouchableOpacity onPress={acceptLateUnderThreshold}>
-                                        <Text style={styles.lateSectionLink}>
-                                            {t("hostAnswersDashboard.acceptUnderButton")}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </Box>
+                                </TouchableOpacity>
 
                                 <TouchableOpacity onPress={rejectAllLate}>
                                     <Text style={styles.lateSectionLink}>
