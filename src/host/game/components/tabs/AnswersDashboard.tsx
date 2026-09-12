@@ -239,22 +239,26 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                         </Box>
 
                                         <Box style={{ flex: 1, gap: 8 }}>
-                                            <Box row align="center" style={{ gap: 10, flexWrap: 'wrap' }}>
-                                                <Text variant="h3" style={{ color: colors.neutralDark.darkest }}>
+                                            <Box row align="center" style={{ gap: 12, flexWrap: 'wrap' }}>
+                                                <Text style={{
+                                                    fontWeight: '800',
+                                                    fontSize: group.matchesAccepted ? 24 : 20,
+                                                    color: colors.neutralDark.darkest,
+                                                }}>
                                                     {group.displayText || t("hostAnswersDashboard.noAnswerText")}
                                                 </Text>
 
                                                 {group.matchesAccepted && (
-                                                    <Box style={[styles.badge, styles.badgeGreen]}>
-                                                        <Text style={[styles.badgeText, styles.badgeTextGreen]}>
+                                                    <Box style={[styles.tag, styles.tagGreen]}>
+                                                        <Text style={[styles.tagText, styles.tagTextGreen]}>
                                                             {t("hostAnswersDashboard.matchesAccepted")}
                                                         </Text>
                                                     </Box>
                                                 )}
 
                                                 {group.charactersOff != null && (
-                                                    <Box style={[styles.badge, styles.badgeOrange]}>
-                                                        <Text style={[styles.badgeText, styles.badgeTextOrange]}>
+                                                    <Box style={[styles.tag, styles.tagOrange]}>
+                                                        <Text style={[styles.tagText, styles.tagTextOrange]}>
                                                             {t("hostAnswersDashboard.charactersOff", { count: group.charactersOff })}
                                                         </Text>
                                                     </Box>
@@ -327,8 +331,8 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                     {lateAnswers.length > 0 && (
                         <Box style={styles.lateSection}>
                             <Box row align="center" style={{ gap: 14, flexWrap: 'wrap', marginBottom: 10 }}>
-                                <Box style={[styles.badge, styles.badgeOrange]}>
-                                    <Text style={[styles.badgeText, styles.badgeTextOrange]}>
+                                <Box style={[styles.tag, styles.tagOrange]}>
+                                    <Text style={[styles.tagText, styles.tagTextOrange]}>
                                         {t("hostAnswersDashboard.lateSectionBadge", { count: lateAnswers.length })}
                                     </Text>
                                 </Box>
@@ -378,8 +382,8 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                             <Text style={{ flex: 1, fontSize: 15, color: colors.neutralDark.darkest }} numberOfLines={1}>
                                                 {a.answerText || t("hostAnswersDashboard.noAnswerText")}
                                             </Text>
-                                            <Box style={[styles.badge, styles.badgeRed, styles.lateSecondsBadge]}>
-                                                <Text style={[styles.badgeText, styles.badgeTextRed, { fontSize: 11 }]}>
+                                            <Box style={[styles.tag, styles.tagRed]}>
+                                                <Text style={[styles.tagText, styles.tagTextRed]}>
                                                     {t("hostAnswersDashboard.lateBy", { seconds: a.lateBySeconds })}
                                                 </Text>
                                             </Box>
@@ -498,10 +502,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         gap: 14,
     },
-    lateSecondsBadge: {
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-    },
     lateActionCircle: {
         width: 32, height: 32, borderRadius: 16,
         backgroundColor: colors.neutralLight.medium,
@@ -539,10 +539,21 @@ const styles = StyleSheet.create({
     badgeTextRed: {
         color: colors.error.dark
     },
-    badgeOrange: {
-        backgroundColor: colors.warning.light, borderColor: colors.warning.medium
+    tag: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
     },
-    badgeTextOrange: {
-        color: colors.warning.dark
-    }
+    tagText: {
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 0.3,
+        textTransform: 'uppercase',
+    },
+    tagGreen: { backgroundColor: colors.success.light },
+    tagTextGreen: { color: colors.success.dark },
+    tagOrange: { backgroundColor: colors.warning.light },
+    tagTextOrange: { color: colors.warning.dark },
+    tagRed: { backgroundColor: colors.error.light },
+    tagTextRed: { color: colors.error.dark },
 });
