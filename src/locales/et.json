@@ -351,7 +351,15 @@
     "acceptUnderButton": "Kinnita",
     "rejectAllLate": "Lükka kõik hilinenud tagasi",
     "matchesAcceptedHint": "vastab õigele",
-    "matchesGroupHint": "vastab grupile {{index}}"
+    "matchesGroupHint": "vastab grupile {{index}}",
+    "roundWaiting": "Ootab: {{count}}",
+    "notPlayed": "mängimata",
+    "judged": "hinnatud",
+    "waiting": "ootab",
+    "acceptedLabel": "Kinnitatud",
+    "noAcceptedAnswer": "Kinnitatud vastust pole",
+    "judgedSuffix": "hinnatud",
+    "itemsLeft": "jäänud {{count}}"
   },
   "hostForgotPassword": {
     "screenTitle": "Unustasid parooli?",

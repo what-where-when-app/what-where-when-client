@@ -28,6 +28,8 @@ interface AnswerGroup {
     charactersOff: number | null;
 }
 
+type QuestionStatus = 'notPlayed' | 'waiting' | 'judged';
+
 export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, activeQuestionId, totalParticipants }: Props) => {
     const { t } = useTranslation();
     const allQuestions = useMemo(() => rounds.flatMap(r => r.questions), [rounds]);
@@ -44,6 +46,7 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
 
     const correctCount = currentAnswers.filter(a => a.status === AnswerStatus.CORRECT).length;
     const incorrectCount = currentAnswers.filter(a => a.status === AnswerStatus.INCORRECT).length;
+    const judgedAnswerCount = correctCount + incorrectCount;
 
     // Late answers are excluded from grouping entirely and judged one by one —
     // grouping them could silently bundle a late submission in with an
@@ -102,6 +105,29 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
         return idx ? t("hostAnswersDashboard.matchesGroupHint", { index: idx }) : '';
     };
 
+    const itemsLeft = groups.filter(g => g.status === 'unset' || g.status === 'mixed').length
+        + lateAnswers.filter(a => a.status === AnswerStatus.UNSET).length;
+    const progressPct = currentAnswers.length > 0
+        ? Math.round((judgedAnswerCount / currentAnswers.length) * 100)
+        : 0;
+
+    // Per-question judged/waiting/not-played status, across every round —
+    // used by the navigator above, not just the selected question.
+    const questionStatusById = useMemo(() => {
+        const map = new Map<number, QuestionStatus>();
+        allQuestions.forEach((q: any) => {
+            const qAnswers = answers.filter(a => a.questionId === q.id);
+            if (qAnswers.length === 0) {
+                map.set(q.id, 'notPlayed');
+            } else if (qAnswers.every(a => a.status === AnswerStatus.CORRECT || a.status === AnswerStatus.INCORRECT)) {
+                map.set(q.id, 'judged');
+            } else {
+                map.set(q.id, 'waiting');
+            }
+        });
+        return map;
+    }, [answers, allQuestions]);
+
     const judgeIds = (ids: number[], verdict: AnswerStatus, meta: Record<string, unknown> = {}) => {
         void mixpanel.track("Host Answer Group Judged", {
             question_id: selectedQId,
@@ -134,66 +160,125 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
         <Box style={styles.container}>
             <ScrollView contentContainerStyle={{ margin: 10 }} showsVerticalScrollIndicator={false}>
 
-                <Box style={styles.topCard}>
-                    <Box row style={{ gap: 32 }}>
-                        <Box style={{ flex: 1 }}>
-                            <Box style={{ gap: 8 }}>
-                                {rounds.map((round) => (
-                                    <Box key={round.id || round._tmpId} style={{ gap: 4 }}>
-                                        <Text variant="captionM" style={{ color: colors.neutralDark.medium, fontWeight: 'bold' }}>
-                                            {round.name || t("hostAnswersDashboard.roundFallback", { n: round.round_number })}
-                                        </Text>
+                <Box style={styles.navCard}>
+                    <Box style={{ gap: 10 }}>
+                        {rounds.map((round) => {
+                            const roundQuestions = round.questions || [];
+                            const waitingCount = roundQuestions.filter((q: any) => questionStatusById.get(q.id) === 'waiting').length;
+                            const allNotPlayed = roundQuestions.length > 0 && roundQuestions.every((q: any) => questionStatusById.get(q.id) === 'notPlayed');
 
-                                        <Box row style={{ flexWrap: 'wrap', gap: 12 }}>
-                                            {(round.questions || []).map((q: any) => {
-                                                const isSelected = q.id === selectedQId;
-                                                const outlineColor = isSelected ? colors.highlight.darkest : colors.neutralLight.dark;
+                            return (
+                                <Box key={round.id || round._tmpId} row align="center" style={{ gap: 12 }}>
+                                    <Text style={styles.roundLabel} numberOfLines={1}>
+                                        {(round.name || t("hostAnswersDashboard.roundFallback", { n: round.round_number })).toUpperCase()}
+                                    </Text>
 
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={q.id || q._tmpId}
-                                                        onPress={() => {
-                                                            void mixpanel.track("Host Answers Question Selected", {
-                                                                question_id: q.id ?? null,
-                                                                question_number: q.question_number,
-                                                                round_id: round.id ?? null,
-                                                                round_number: round.round_number,
-                                                                from_question_id: selectedQId ?? null,
-                                                                is_active: q.id === activeQuestionId,
-                                                            });
-                                                            setSelectedQId(q.id);
-                                                        }}
-                                                        style={[
-                                                            styles.qCircle,
-                                                            { borderColor: outlineColor },
-                                                            isSelected && { borderWidth: 2 }
-                                                        ]}
-                                                    >
-                                                        <Text style={{
-                                                            fontWeight: isSelected ? 'bold' : 'normal',
-                                                            color: isSelected ? colors.highlight.darkest : colors.neutralDark.darkest
-                                                        }}>
-                                                            {q.question_number}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                );
-                                            })}
-                                        </Box>
+                                    <Box row style={{ flex: 1, gap: 5, flexWrap: 'wrap' }}>
+                                        {roundQuestions.map((q: any) => {
+                                            const isSelected = q.id === selectedQId;
+                                            const status = questionStatusById.get(q.id) ?? 'notPlayed';
+
+                                            return (
+                                                <TouchableOpacity
+                                                    key={q.id || q._tmpId}
+                                                    onPress={() => {
+                                                        void mixpanel.track("Host Answers Question Selected", {
+                                                            question_id: q.id ?? null,
+                                                            question_number: q.question_number,
+                                                            round_id: round.id ?? null,
+                                                            round_number: round.round_number,
+                                                            from_question_id: selectedQId ?? null,
+                                                            is_active: q.id === activeQuestionId,
+                                                        });
+                                                        setSelectedQId(q.id);
+                                                    }}
+                                                    style={[
+                                                        styles.navCircle,
+                                                        status === 'judged' && styles.navCircleJudged,
+                                                        status === 'waiting' && styles.navCircleWaiting,
+                                                        isSelected && styles.navCircleSelected,
+                                                    ]}
+                                                >
+                                                    <Text style={[
+                                                        styles.navCircleText,
+                                                        status === 'judged' && styles.navCircleTextJudged,
+                                                        status === 'waiting' && styles.navCircleTextWaiting,
+                                                        isSelected && styles.navCircleTextSelected,
+                                                    ]}>
+                                                        {q.question_number}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
                                     </Box>
-                                ))}
-                            </Box>
-                        </Box>
 
-                        <Box style={{ flex: 1 }}>
-                            <Text variant="bodyM" style={{ color: colors.neutralDark.medium, lineHeight: 24, marginBottom: 16 }}>
-                                {activeQuestion?.text || t("hostAnswersDashboard.selectQuestion")}
-                            </Text>
-                            <Text variant="h3">{activeQuestion?.answer}</Text>
+                                    <Text style={waitingCount > 0 ? styles.roundStatusWaiting : styles.roundStatusNeutral}>
+                                        {waitingCount > 0
+                                            ? t("hostAnswersDashboard.roundWaiting", { count: waitingCount })
+                                            : allNotPlayed
+                                                ? t("hostAnswersDashboard.notPlayed")
+                                                : ''}
+                                    </Text>
+                                </Box>
+                            );
+                        })}
+                    </Box>
+
+                    <Box row align="center" style={styles.navLegend}>
+                        <Box row align="center" style={{ gap: 6 }}>
+                            <Box style={[styles.legendDot, { backgroundColor: colors.success.medium }]} />
+                            <Text style={styles.legendText}>{t("hostAnswersDashboard.judged")}</Text>
+                        </Box>
+                        <Box row align="center" style={{ gap: 6 }}>
+                            <Box style={[styles.legendDot, { backgroundColor: colors.error.medium }]} />
+                            <Text style={styles.legendText}>{t("hostAnswersDashboard.waiting")}</Text>
+                        </Box>
+                        <Box row align="center" style={{ gap: 6 }}>
+                            <Box style={[styles.legendDot, { backgroundColor: colors.neutralLight.darkest }]} />
+                            <Text style={styles.legendText}>{t("hostAnswersDashboard.notPlayed")}</Text>
                         </Box>
                     </Box>
                 </Box>
 
-                <Box row align="center" style={{ marginBottom: 10, gap: 16, flexWrap: 'wrap' }}>
+                {activeQuestion?.text ? (
+                    <Text variant="bodyM" style={{ color: colors.neutralDark.medium, lineHeight: 24, marginBottom: 10 }}>
+                        {activeQuestion.text}
+                    </Text>
+                ) : null}
+
+                {activeQuestion && (
+                    <Box row align="center" style={styles.acceptedCard}>
+                        <Box row align="center" style={{ flex: 1, gap: 12, flexWrap: 'wrap' }}>
+                            <Text style={styles.acceptedLabel}>{t("hostAnswersDashboard.acceptedLabel")}</Text>
+                            <Text style={{ fontSize: 21, fontWeight: '800', color: colors.neutralDark.darkest }}>
+                                {activeQuestion.answer || t("hostAnswersDashboard.noAcceptedAnswer")}
+                            </Text>
+                        </Box>
+
+                        <Box style={{ width: 230, gap: 6 }}>
+                            <Box row align="baseline" justify="space-between">
+                                <Text>
+                                    <Text style={{ fontSize: 22, fontWeight: '800', color: colors.neutralDark.darkest }}>
+                                        {judgedAnswerCount}
+                                    </Text>
+                                    <Text style={{ fontSize: 13, color: colors.neutralDark.lightest }}>
+                                        {" / "}{currentAnswers.length} {t("hostAnswersDashboard.judgedSuffix")}
+                                    </Text>
+                                </Text>
+                                {itemsLeft > 0 && (
+                                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.warning.dark }}>
+                                        {t("hostAnswersDashboard.itemsLeft", { count: itemsLeft })}
+                                    </Text>
+                                )}
+                            </Box>
+                            <Box style={styles.progressTrack}>
+                                <Box style={[styles.progressFill, { width: `${progressPct}%` }]} />
+                            </Box>
+                        </Box>
+                    </Box>
+                )}
+
+                <Box row align="center" style={{ marginBottom: 10, marginTop: 10, gap: 16, flexWrap: 'wrap' }}>
                     <Box row align="center" style={[styles.badge, styles.badgeBlue]}>
                         <Text style={[styles.badgeText, styles.badgeTextBlue]}>
                             {t("hostAnswersDashboard.total", { count: currentAnswers.length })}
@@ -266,35 +351,13 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                             </Box>
 
                                             <Box row style={{ gap: 8, flexWrap: 'wrap' }}>
-                                                {group.answers.map(a => {
-                                                    const memberCorrect = a.status === AnswerStatus.CORRECT;
-                                                    const memberWrong = a.status === AnswerStatus.INCORRECT;
-
-                                                    return (
-                                                        <Box key={a.id} row align="center" style={styles.teamPill}>
-                                                            <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
-                                                                {a.teamName}
-                                                            </Text>
-
-                                                            {group.answers.length > 1 && (
-                                                                <Box row align="center" style={{ gap: 4, marginLeft: 8 }}>
-                                                                    <TouchableOpacity
-                                                                        style={[styles.miniActionCircle, memberWrong && styles.actionCircleWrong]}
-                                                                        onPress={() => onJudge(a.id, AnswerStatus.INCORRECT)}
-                                                                    >
-                                                                        <Feather name="x" size={11} color={memberWrong ? '#fff' : colors.neutralDark.medium} />
-                                                                    </TouchableOpacity>
-                                                                    <TouchableOpacity
-                                                                        style={[styles.miniActionCircle, memberCorrect && styles.actionCircleCorrect]}
-                                                                        onPress={() => onJudge(a.id, AnswerStatus.CORRECT)}
-                                                                    >
-                                                                        <Feather name="check" size={11} color={memberCorrect ? '#fff' : colors.neutralDark.medium} />
-                                                                    </TouchableOpacity>
-                                                                </Box>
-                                                            )}
-                                                        </Box>
-                                                    );
-                                                })}
+                                                {group.answers.map(a => (
+                                                    <Box key={a.id} style={styles.teamPill}>
+                                                        <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
+                                                            {a.teamName}
+                                                        </Text>
+                                                    </Box>
+                                                ))}
                                             </Box>
                                         </Box>
 
@@ -420,16 +483,104 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    topCard: {
+    navCard: {
         backgroundColor: colors.neutralLight.lightest,
-        padding: 24,
+        padding: 18,
         marginBottom: 10,
         borderRadius: 16,
     },
-    qCircle: {
-        width: 36, height: 36, borderRadius: 18,
-        borderWidth: 1, justifyContent: 'center', alignItems: 'center',
-        backgroundColor: colors.neutralLight.lightest
+    roundLabel: {
+        width: 110,
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 0.4,
+        color: colors.neutralDark.lightest,
+    },
+    navCircle: {
+        width: 28, height: 28, borderRadius: 14,
+        borderWidth: 1, borderColor: colors.neutralLight.medium,
+        backgroundColor: colors.neutralLight.lightest,
+        justifyContent: 'center', alignItems: 'center',
+    },
+    navCircleJudged: {
+        backgroundColor: colors.success.light,
+        borderColor: colors.success.light,
+    },
+    navCircleWaiting: {
+        backgroundColor: colors.error.light,
+        borderColor: colors.error.medium,
+    },
+    navCircleSelected: {
+        backgroundColor: colors.neutralLight.lightest,
+        borderColor: colors.highlight.darkest,
+        borderWidth: 2,
+    },
+    navCircleText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: colors.neutralDark.lightest,
+    },
+    navCircleTextJudged: {
+        color: colors.success.dark,
+    },
+    navCircleTextWaiting: {
+        color: colors.error.dark,
+        fontWeight: '800',
+    },
+    navCircleTextSelected: {
+        color: colors.highlight.darkest,
+        fontWeight: '800',
+    },
+    roundStatusWaiting: {
+        width: 92,
+        textAlign: 'right',
+        fontSize: 11,
+        color: colors.error.dark,
+    },
+    roundStatusNeutral: {
+        width: 92,
+        textAlign: 'right',
+        fontSize: 11,
+        color: colors.neutralDark.lightest,
+    },
+    navLegend: {
+        gap: 16,
+        marginTop: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: colors.neutralLight.light,
+    },
+    legendDot: {
+        width: 6, height: 6, borderRadius: 3,
+    },
+    legendText: {
+        fontSize: 11,
+        color: colors.neutralDark.lightest,
+    },
+    acceptedCard: {
+        backgroundColor: colors.neutralLight.lightest,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.neutralLight.medium,
+        padding: 16,
+        gap: 20,
+    },
+    acceptedLabel: {
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 0.4,
+        textTransform: 'uppercase',
+        color: colors.success.dark,
+    },
+    progressTrack: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colors.neutralLight.medium,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: 8,
+        backgroundColor: colors.highlight.darkest,
     },
     groupCard: {
         backgroundColor: colors.neutralLight.lightest,
@@ -509,11 +660,6 @@ const styles = StyleSheet.create({
     },
     actionCircleCorrect: { backgroundColor: colors.success.medium },
     actionCircleWrong: { backgroundColor: colors.error.medium },
-    miniActionCircle: {
-        width: 20, height: 20, borderRadius: 10,
-        backgroundColor: colors.neutralLight.medium,
-        justifyContent: 'center', alignItems: 'center'
-    },
     badge: {
         paddingHorizontal: 16, paddingVertical: 8,
         borderRadius: 12, borderWidth: 1

@@ -351,7 +351,15 @@
     "acceptUnderButton": "Accept",
     "rejectAllLate": "Reject all late",
     "matchesAcceptedHint": "matches accepted",
-    "matchesGroupHint": "matches group {{index}}"
+    "matchesGroupHint": "matches group {{index}}",
+    "roundWaiting": "{{count}} waiting",
+    "notPlayed": "not played",
+    "judged": "judged",
+    "waiting": "waiting",
+    "acceptedLabel": "Accepted",
+    "noAcceptedAnswer": "No accepted answer set",
+    "judgedSuffix": "judged",
+    "itemsLeft": "{{count}} left"
   },
   "hostForgotPassword": {
     "screenTitle": "Forgot password?",

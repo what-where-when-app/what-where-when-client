@@ -351,7 +351,15 @@
     "acceptUnderButton": "Принять",
     "rejectAllLate": "Отклонить все опоздавшие",
     "matchesAcceptedHint": "совпадает с принятым",
-    "matchesGroupHint": "совпадает с группой {{index}}"
+    "matchesGroupHint": "совпадает с группой {{index}}",
+    "roundWaiting": "Ожидают: {{count}}",
+    "notPlayed": "не сыгран",
+    "judged": "оценено",
+    "waiting": "ожидает",
+    "acceptedLabel": "Принято",
+    "noAcceptedAnswer": "Принятый ответ не задан",
+    "judgedSuffix": "оценено",
+    "itemsLeft": "осталось {{count}}"
   },
   "hostForgotPassword": {
     "screenTitle": "Забыли пароль?",
