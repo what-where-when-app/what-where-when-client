@@ -653,11 +653,11 @@ const styles = StyleSheet.create({
     actionCircleCorrect: { backgroundColor: colors.success.medium },
     actionCircleWrong: { backgroundColor: colors.error.medium },
     badge: {
-        paddingHorizontal: 18, paddingVertical: 10,
-        borderRadius: 22, borderWidth: 1
+        paddingHorizontal: 16, paddingVertical: 7,
+        borderRadius: 20, borderWidth: 1
     },
     badgeText: {
-        fontSize: 14, fontWeight: '800'
+        fontSize: 13, fontWeight: '600'
     },
     badgeBlue: {
         backgroundColor: colors.highlight.lightest, borderColor: colors.highlight.light
