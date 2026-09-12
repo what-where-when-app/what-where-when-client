@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from "react-i18next";
@@ -54,6 +54,15 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
     const lateAnswers = useMemo(() => currentAnswers.filter(a => !!a.lateBySeconds), [currentAnswers]);
     const onTimeAnswers = useMemo(() => currentAnswers.filter(a => !a.lateBySeconds), [currentAnswers]);
 
+    // A group's position is assigned once, the first time it's seen for
+    // this question, and never touched again — so a new matching answer
+    // arriving later (turning a single row into a group, or growing an
+    // existing group) updates that entry in place without moving it.
+    // Otherwise the list would keep reshuffling as new answers came in,
+    // exactly the jumpiness already fixed for judging.
+    const groupOrderRef = useRef<Map<string, number>>(new Map());
+    const orderCounterRef = useRef(0);
+
     // groupKey/matchesAccepted/charactersOff are computed server-side (per
     // answer, from the question's accepted answer) — this just buckets
     // already-computed facts, no text comparison happens on the client.
@@ -82,18 +91,26 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
             };
         });
 
-        // Ordered by how many teams wrote them, not by similarity to the
-        // accepted answer — "matches accepted" is just a badge that can
-        // land on any group. Judging a group doesn't change its size, so
-        // this order never shifts once a group is judged — a group's place
-        // in the list is fixed as soon as it's formed.
-        result.sort((a, b) => {
+        // Brand-new groups (never seen for this question before) are placed
+        // by size relative to each other, then get a permanent order index.
+        // Groups already assigned an index keep it forever, regardless of
+        // how their size changes afterward.
+        const orderMap = groupOrderRef.current;
+        const unassigned = result.filter(g => !orderMap.has(`${selectedQId}:${g.key}`));
+        unassigned.sort((a, b) => {
             if (b.answers.length !== a.answers.length) return b.answers.length - a.answers.length;
             return a.matchesAccepted === b.matchesAccepted ? 0 : a.matchesAccepted ? -1 : 1;
         });
+        unassigned.forEach(g => {
+            orderMap.set(`${selectedQId}:${g.key}`, orderCounterRef.current++);
+        });
+
+        result.sort((a, b) =>
+            orderMap.get(`${selectedQId}:${a.key}`)! - orderMap.get(`${selectedQId}:${b.key}`)!
+        );
 
         return result;
-    }, [onTimeAnswers]);
+    }, [onTimeAnswers, selectedQId]);
 
     const groupIndexByKey = useMemo(() => {
         const map = new Map<string, number>();
