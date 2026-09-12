@@ -340,7 +340,10 @@
     "colTeamName": "Team",
     "colAnswerText": "Answer",
     "empty": "No answers yet",
-    "lateBy": "Late: {{seconds}} s"
+    "lateBy": "Late: {{seconds}} s",
+    "noAnswerText": "No answer text",
+    "matchesAccepted": "Matches accepted answer",
+    "charactersOff": "{{count}} character(s) off"
   },
   "hostForgotPassword": {
     "screenTitle": "Forgot password?",

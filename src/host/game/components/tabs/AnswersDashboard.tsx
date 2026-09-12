@@ -8,16 +8,28 @@ import { colors } from '@/src/theme/colors';
 import { AnswerDomain } from "@/src/dto/game.dto";
 import { AnswerStatus } from "@/src/dto/common.dto";
 import { mixpanel } from "@/src/analytics/mixpanel";
+import { normalizeAnswerText, levenshteinDistance } from "@/src/util/textSimilarity";
 
 interface Props {
     rounds: any[];
     answers: AnswerDomain[];
     onJudge: (id: number, verdict: AnswerStatus) => void;
+    onJudgeBulk?: (ids: number[], verdict: AnswerStatus) => void;
     activeQuestionId?: number;
     totalParticipants?: number;
 }
 
-export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, totalParticipants }: Props) => {
+interface AnswerGroup {
+    key: string;
+    displayText: string;
+    answers: AnswerDomain[];
+    status: 'unset' | 'correct' | 'incorrect' | 'mixed';
+    matchesAccepted: boolean;
+    charactersOff: number | null;
+    maxLateBySeconds: number | null;
+}
+
+export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, activeQuestionId, totalParticipants }: Props) => {
     const { t } = useTranslation();
     const allQuestions = useMemo(() => rounds.flatMap(r => r.questions), [rounds]);
     const [selectedQId, setSelectedQId] = useState<number | null>(() => {
@@ -32,6 +44,78 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, t
 
     const correctCount = currentAnswers.filter(a => a.status === AnswerStatus.CORRECT).length;
     const incorrectCount = currentAnswers.filter(a => a.status === AnswerStatus.INCORRECT).length;
+
+    const acceptedNormalized = useMemo(
+        () => activeQuestion?.answer ? normalizeAnswerText(activeQuestion.answer) : '',
+        [activeQuestion?.answer]
+    );
+
+    const groups = useMemo<AnswerGroup[]>(() => {
+        const byKey = new Map<string, AnswerDomain[]>();
+        currentAnswers.forEach(ans => {
+            const normalized = normalizeAnswerText(ans.answerText);
+            const key = normalized === '' ? `__single_${ans.id}` : normalized;
+            const existing = byKey.get(key);
+            if (existing) existing.push(ans);
+            else byKey.set(key, [ans]);
+        });
+
+        const result: AnswerGroup[] = Array.from(byKey.values()).map(members => {
+            const normalized = normalizeAnswerText(members[0].answerText);
+            const allCorrect = members.every(m => m.status === AnswerStatus.CORRECT);
+            const allIncorrect = members.every(m => m.status === AnswerStatus.INCORRECT);
+            const allUnset = members.every(m => m.status === AnswerStatus.UNSET);
+            const status: AnswerGroup['status'] =
+                allUnset ? 'unset' : allCorrect ? 'correct' : allIncorrect ? 'incorrect' : 'mixed';
+            const matchesAccepted = acceptedNormalized !== '' && normalized === acceptedNormalized;
+
+            let charactersOff: number | null = null;
+            if (!matchesAccepted && acceptedNormalized !== '' && normalized !== '') {
+                const distance = levenshteinDistance(normalized, acceptedNormalized);
+                if (distance > 0 && distance <= 2) charactersOff = distance;
+            }
+
+            const maxLateBySeconds = members.reduce<number | null>((max, m) => {
+                if (m.lateBySeconds == null) return max;
+                return max == null ? m.lateBySeconds : Math.max(max, m.lateBySeconds);
+            }, null);
+
+            return {
+                key: `${members[0].questionId}-${normalized || members[0].id}`,
+                displayText: members[0].answerText,
+                answers: members,
+                status,
+                matchesAccepted,
+                charactersOff,
+                maxLateBySeconds,
+            };
+        });
+
+        result.sort((a, b) => {
+            if (a.matchesAccepted !== b.matchesAccepted) return a.matchesAccepted ? -1 : 1;
+            const aJudged = a.status === 'correct' || a.status === 'incorrect';
+            const bJudged = b.status === 'correct' || b.status === 'incorrect';
+            if (aJudged !== bJudged) return aJudged ? 1 : -1;
+            return b.answers.length - a.answers.length;
+        });
+
+        return result;
+    }, [currentAnswers, acceptedNormalized]);
+
+    const judgeGroup = (group: AnswerGroup, verdict: AnswerStatus) => {
+        const ids = group.answers.map(a => a.id);
+        void mixpanel.track("Host Answer Group Judged", {
+            question_id: selectedQId,
+            group_size: ids.length,
+            matches_accepted: group.matchesAccepted,
+            verdict,
+        });
+        if (onJudgeBulk) {
+            onJudgeBulk(ids, verdict);
+        } else {
+            ids.forEach(id => onJudge(id, verdict));
+        }
+    };
 
     return (
         <Box style={styles.container}>
@@ -114,50 +198,67 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, t
                     </Box>
                 </Box>
 
-                <Box row justify="space-between" align="center" style={styles.tableHeader}>
-                    <Text variant="captionM" style={{ flex: 1, color: colors.neutralDark.medium }}>{t("hostAnswersDashboard.colTeamName")}</Text>
-                    <Text variant="captionM" style={{ flex: 2, color: colors.neutralDark.medium }}>{t("hostAnswersDashboard.colAnswerText")}</Text>
-                    <Box style={{ width: 140 }} />
-                </Box>
-
-                <Box style={{ gap: 10 }}>
-                    {currentAnswers.length === 0 ? (
+                <Box style={{ gap: 12 }}>
+                    {groups.length === 0 ? (
                         <Text variant="bodyM" style={{ color: colors.neutralDark.light, textAlign: 'center', padding: 20 }}>
                             {t("hostAnswersDashboard.empty")}
                         </Text>
                     ) : (
-                        currentAnswers.map(ans => {
-                            const isCorrect = ans.status === AnswerStatus.CORRECT;
-                            const isWrong = ans.status === AnswerStatus.INCORRECT;
+                        groups.map(group => {
+                            const isCorrect = group.status === 'correct';
+                            const isWrong = group.status === 'incorrect';
 
                             return (
-                                <Box key={ans.id} row align="center" justify="space-between" style={styles.answerRow}>
-                                    <Box style={{ flex: 1 }}>
-                                        <Text variant="bodyL" style={{ fontWeight: '600', color: colors.neutralDark.darkest }}>
-                                            {ans.teamName}
-                                        </Text>
-                                    </Box>
+                                <Box
+                                    key={group.key}
+                                    style={[
+                                        styles.groupCard,
+                                        group.matchesAccepted && styles.groupCardAccepted,
+                                        (isCorrect || isWrong) && styles.groupCardJudged,
+                                    ]}
+                                >
+                                    <Box row align="center" justify="space-between" style={{ gap: 20 }}>
+                                        <Box style={{ flex: 1, gap: 8 }}>
+                                            <Box row align="center" style={{ gap: 10, flexWrap: 'wrap' }}>
+                                                <Text variant="h3" style={{ color: colors.neutralDark.darkest }}>
+                                                    {group.displayText || t("hostAnswersDashboard.noAnswerText")}
+                                                </Text>
 
-                                    <Box style={{ flex: 2 }}>
-                                        <Text variant="bodyL" style={{ color: colors.neutralDark.darkest }}>
-                                            {ans.answerText}
-                                        </Text>
-                                    </Box>
+                                                {group.matchesAccepted && (
+                                                    <Box style={[styles.badge, styles.badgeGreen]}>
+                                                        <Text style={[styles.badgeText, styles.badgeTextGreen]}>
+                                                            {t("hostAnswersDashboard.matchesAccepted")}
+                                                        </Text>
+                                                    </Box>
+                                                )}
 
-                                    <Box row align="center" justify="flex-end" style={{ width: 140, gap: 16, position: 'relative' }}>
+                                                {group.charactersOff != null && (
+                                                    <Box style={[styles.badge, styles.badgeOrange]}>
+                                                        <Text style={[styles.badgeText, styles.badgeTextOrange]}>
+                                                            {t("hostAnswersDashboard.charactersOff", { count: group.charactersOff })}
+                                                        </Text>
+                                                    </Box>
+                                                )}
 
-                                        {ans.lateBySeconds ? (
-                                            <Text style={{
-                                                position: 'absolute',
-                                                right: 156,
-                                                color: colors.error.dark,
-                                                fontSize: 12,
-                                                width: 100,
-                                                textAlign: 'right'
-                                            }}>
-                                                {t("hostAnswersDashboard.lateBy", { seconds: ans.lateBySeconds })}
-                                            </Text>
-                                        ) : null}
+                                                {group.maxLateBySeconds ? (
+                                                    <Box style={[styles.badge, styles.badgeRed]}>
+                                                        <Text style={[styles.badgeText, styles.badgeTextRed]}>
+                                                            {t("hostAnswersDashboard.lateBy", { seconds: group.maxLateBySeconds })}
+                                                        </Text>
+                                                    </Box>
+                                                ) : null}
+                                            </Box>
+
+                                            <Box row style={{ gap: 8, flexWrap: 'wrap' }}>
+                                                {group.answers.map(a => (
+                                                    <Box key={a.id} style={styles.teamPill}>
+                                                        <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
+                                                            {a.teamName}
+                                                        </Text>
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        </Box>
 
                                         <Box row align="center" style={[
                                             styles.actionPill,
@@ -166,21 +267,21 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, t
                                         ]}>
                                             <TouchableOpacity
                                                 style={[styles.actionCircle, isWrong && styles.actionCircleWrong]}
-                                                onPress={() => onJudge(ans.id, AnswerStatus.INCORRECT)}
+                                                onPress={() => judgeGroup(group, AnswerStatus.INCORRECT)}
                                             >
                                                 <Feather name="x" size={20} color={isWrong ? '#fff' : colors.neutralDark.medium} />
                                             </TouchableOpacity>
 
                                             <TouchableOpacity
                                                 style={[styles.actionCircle, isCorrect && styles.actionCircleCorrect]}
-                                                onPress={() => onJudge(ans.id, AnswerStatus.CORRECT)}
+                                                onPress={() => judgeGroup(group, AnswerStatus.CORRECT)}
                                             >
                                                 <Feather name="check" size={20} color={isCorrect ? '#fff' : colors.neutralDark.medium} />
                                             </TouchableOpacity>
                                         </Box>
                                     </Box>
                                 </Box>
-                            )
+                            );
                         })
                     )}
                 </Box>
@@ -204,17 +305,27 @@ const styles = StyleSheet.create({
         borderWidth: 1, justifyContent: 'center', alignItems: 'center',
         backgroundColor: colors.neutralLight.lightest
     },
-    tableHeader: {
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        borderBottomWidth: 1,
+    groupCard: {
+        backgroundColor: colors.neutralLight.lightest,
+        borderRadius: 16,
+        borderWidth: 1,
         borderColor: colors.neutralLight.medium,
-        marginBottom: 8
+        padding: 18,
     },
-    answerRow: {
-        paddingVertical: 16,
-        paddingHorizontal: 16,
-        backgroundColor: colors.neutralLight.lightest
+    groupCardAccepted: {
+        borderColor: colors.highlight.darkest,
+        borderWidth: 2,
+    },
+    groupCardJudged: {
+        opacity: 0.72,
+    },
+    teamPill: {
+        backgroundColor: colors.neutralLight.light,
+        borderWidth: 1,
+        borderColor: colors.neutralLight.medium,
+        borderRadius: 14,
+        paddingVertical: 5,
+        paddingHorizontal: 12,
     },
     actionPill: {
         flexDirection: 'row',
@@ -257,5 +368,11 @@ const styles = StyleSheet.create({
     },
     badgeTextRed: {
         color: colors.error.dark
+    },
+    badgeOrange: {
+        backgroundColor: colors.warning.light, borderColor: colors.warning.medium
+    },
+    badgeTextOrange: {
+        color: colors.warning.dark
     }
 });

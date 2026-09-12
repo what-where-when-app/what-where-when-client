@@ -340,7 +340,10 @@
     "colTeamName": "Võistkond",
     "colAnswerText": "Vastus",
     "empty": "Vastuseid pole veel",
-    "lateBy": "Hilines: {{seconds}} s"
+    "lateBy": "Hilines: {{seconds}} s",
+    "noAnswerText": "Vastuse tekst puudub",
+    "matchesAccepted": "Vastab õigele vastusele",
+    "charactersOff": "Erinevus: {{count}} täht(e)"
   },
   "hostForgotPassword": {
     "screenTitle": "Unustasid parooli?",
