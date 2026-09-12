@@ -24,12 +24,6 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, activeQuestionId, t
         return activeQuestionId || allQuestions[0]?.id || null;
     });
 
-    React.useEffect(() => {
-        if (activeQuestionId) {
-            setSelectedQId(activeQuestionId);
-        }
-    }, [activeQuestionId]);
-
     const currentAnswers = useMemo(() =>
             answers.filter(a => a.questionId === selectedQId),
         [answers, selectedQId]);

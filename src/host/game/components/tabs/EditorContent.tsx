@@ -10,6 +10,7 @@ import { Button } from "@/src/ui/Button";
 import { Box } from "@/src/ui/Box";
 import { Text } from "@/src/ui/Text";
 import { useGameEditor } from "@/src/host/game/components/tabs/editor/state";
+import { GameStatuses } from "@/src/dto/common.dto";
 import { colors } from "@/src/theme/colors";
 import { TextField } from "@/src/ui/TextField";
 import { ddmmyyyyToIsoDate, isoDateToDdmmyyyy } from "@/src/util/dateFormat";
@@ -100,12 +101,48 @@ export const EditorContent = ({ editor }: EditorContentProps) => {
                         <Button
                             title={t("hostEditor.createGame")}
                             variant="primary"
-                            disabled={!canCreate}
+                            disabled={!canCreate || editor.isSubmitting}
+                            loading={editor.isSubmitting}
                             onPress={editor.primaryAction}
                         />
                     </View>
                     </Box>
                 </ScrollView>
+            </Box>
+        );
+    }
+
+    if (!editor.loaded) {
+        return (
+            <Box flex={1} align="center" justify="center" style={{ padding: 24, gap: 12 }}>
+                <Text variant="h3" style={{ textAlign: "center" }}>
+                    {t("hostEditor.loadFailedTitle")}
+                </Text>
+                <Text
+                    variant="bodyM"
+                    style={{ textAlign: "center", color: colors.neutralDark.medium, maxWidth: 360 }}
+                >
+                    {editor.saveError || t("hostEditor.loadFailedBody")}
+                </Text>
+                <View style={{ width: 200, marginTop: 8 }}>
+                    <Button title={t("hostEditor.retry")} variant="primary" onPress={editor.reload} />
+                </View>
+            </Box>
+        );
+    }
+
+    if (editor.loaded.status === GameStatuses.FINISHED) {
+        return (
+            <Box flex={1} align="center" justify="center" style={{ padding: 24 }}>
+                <Text variant="h3" style={{ textAlign: "center", marginBottom: 8 }}>
+                    {t("hostEditor.lockedTitle")}
+                </Text>
+                <Text
+                    variant="bodyM"
+                    style={{ textAlign: "center", color: colors.neutralDark.medium, maxWidth: 360 }}
+                >
+                    {t("hostEditor.lockedBody")}
+                </Text>
             </Box>
         );
     }
@@ -123,6 +160,14 @@ export const EditorContent = ({ editor }: EditorContentProps) => {
                 showsVerticalScrollIndicator={false}
             >
 
+                {editor.loaded.status === GameStatuses.LIVE && (
+                    <Box style={styles.liveNotice}>
+                        <Text variant="bodyS" style={{ color: colors.neutralDark.medium }}>
+                            {t("hostEditor.liveEditNotice")}
+                        </Text>
+                    </Box>
+                )}
+
                 <GameMetaRow
                     title={editor.draft.title}
                     date_of_event={editor.draft.date_of_event}
@@ -134,7 +179,7 @@ export const EditorContent = ({ editor }: EditorContentProps) => {
 
                 <SettingsSections
                     settings={editor.draft.settings}
-                    onChange={(next) => editor.setDraft((d) => ({ ...d, settings: next }))}
+                    onChange={editor.updateSettings}
                 />
 
                 <CategoriesSection
@@ -170,34 +215,15 @@ export const EditorContent = ({ editor }: EditorContentProps) => {
 
             </ScrollView>
 
-            <View style={styles.floatingButtonContainer}>
-                {editor.saveError && (
-                    <View style={{ marginBottom: 8, maxWidth: 300 }}>
-                        <Text variant="bodyS" style={{ color: "#EF4444", textAlign: "center" }}>
-                            {editor.saveError}
-                        </Text>
-                    </View>
-                )}
-                <View style={{ width: 300 }}>
-                    <Button
-                        title={t("hostEditor.saveAllChanges")}
-                        variant="primary"
-                        onPress={editor.primaryAction}
-                    />
-                </View>
-            </View>
-
         </Box>
     );
 };
 
 const styles = StyleSheet.create({
-    floatingButtonContainer: {
-        position: 'absolute',
-        top: 16,
-        right: 24,
-        zIndex: 10,
-        elevation: 5,
+    liveNotice: {
+        backgroundColor: colors.highlight.lightest,
+        borderRadius: 12,
+        padding: 14,
     },
     createRoot: {
         justifyContent: "flex-start",

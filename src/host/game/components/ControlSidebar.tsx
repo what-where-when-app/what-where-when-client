@@ -20,6 +20,8 @@ interface ControlSidebarProps {
     gameName?: string;
     passcode?: string;
     participants: ParticipantDomain[];
+    teamsCount: number;
+    isDirty: boolean;
     gameState: GameState;
     onStartGame: () => void;
     onPrepareQuestion: (id: number) => void;
@@ -35,6 +37,7 @@ interface ControlSidebarProps {
 
 export const ControlSidebar = ({
                                    isNew, rounds, answers, gameName, passcode, participants = [],
+                                   teamsCount, isDirty,
                                    gameState, onStartGame, onPrepareQuestion, onStartQuestion,
                                    onNextQuestion, onPrevQuestion, onStartTimer, onStopTimer,
                                    onStopQuestion, onFinishGame, onAdjustTime
@@ -72,6 +75,15 @@ export const ControlSidebar = ({
         const r = rounds.find(r => r.id === q?.round_id);
         return { currentQuestion: q, currentRound: r, totalQuestions: allQs.length };
     }, [rounds, gameState.activeQuestionId]);
+
+    const canStartGame = totalQuestions > 0 && teamsCount > 0 && !isDirty;
+    const startBlockedReason = canStartGame
+        ? null
+        : isDirty
+            ? t("hostSidebar.startBlockedUnsaved")
+            : totalQuestions === 0
+                ? t("hostSidebar.startBlockedNoQuestions")
+                : t("hostSidebar.startBlockedNoTeams");
 
     const currentAnswersCount = useMemo(() =>
             answers.filter(a => a.questionId === gameState.activeQuestionId).length,
@@ -263,7 +275,7 @@ export const ControlSidebar = ({
                             <Box row justify="space-between" align="center">
                                 <Text variant="h4">
                                     {t("hostSidebar.questionProgress", {
-                                        current: gameState.activeQuestionNumber || 0,
+                                        current: gameState.activeGlobalQuestionNumber || 0,
                                         total: totalQuestions,
                                     })}
                                 </Text>
@@ -341,7 +353,22 @@ export const ControlSidebar = ({
 
                             <Box style={{ gap: 6, marginTop: 8 }}>
                                 {!isLive && !isNew && (
-                                    <Button title={t("hostSidebar.startGame")} onPress={onStartGame} variant="primary" />
+                                    <Box style={{ gap: 6 }}>
+                                        <Button
+                                            title={t("hostSidebar.startGame")}
+                                            onPress={onStartGame}
+                                            variant="primary"
+                                            disabled={!canStartGame}
+                                        />
+                                        {startBlockedReason && (
+                                            <Text
+                                                variant="bodyS"
+                                                style={{ color: colors.neutralDark.light, textAlign: 'center' }}
+                                            >
+                                                {startBlockedReason}
+                                            </Text>
+                                        )}
+                                    </Box>
                                 )}
 
                                 {isLive && gameState.activeQuestionId && (

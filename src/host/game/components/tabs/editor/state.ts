@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import type {
     HostGameDetails,
@@ -11,6 +11,9 @@ import {toSaveGameDraft} from "@/src/game/mappers";
 import {tmpId} from "@/src/utils/tmpId";
 import {UICategory, UIQuestion, UIRound, UITeam} from "@/src/host/game/components/tabs/editor/types";
 import { mixpanel } from "@/src/analytics/mixpanel";
+
+const AUTOSAVE_DEBOUNCE_MS = 1500;
+const MIN_SAVING_INDICATOR_MS = 2000;
 
 export function useGameEditor(gameIdParam: string) {
     const router = useRouter();
@@ -44,15 +47,35 @@ export function useGameEditor(gameIdParam: string) {
     const [deletedCategoryIds, setDeletedCategoryIds] = useState<number[]>([]);
 
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [isDirty, setIsDirty] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [selectedRoundKey, setSelectedRoundKey] = useState<string | null>(null);
     const [selectedQuestionKey, setSelectedQuestionKey] = useState<string | null>(null);
+
+    // Guards against overlapping saves: if an edit triggers another save
+    // request while one is already in flight (autosave firing right as the
+    // manual button is pressed, or two autosaves racing), we don't fire a
+    // second request — we just remember to save again once the current one
+    // finishes, so the latest edits are never dropped.
+    const isSavingRef = useRef(false);
+    const pendingSaveRef = useRef(false);
+    const saveNowRef = useRef<() => Promise<void>>(async () => {});
+    // Bumped on every save attempt so a delayed hide-timer from an earlier
+    // (already-superseded) save can't cut short a newer one's minimum
+    // display time.
+    const savingGenerationRef = useRef(0);
+    const draftRef = useRef(draft);
+    useEffect(() => {
+        draftRef.current = draft;
+    }, [draft]);
 
     const load = useCallback(async () => {
         if (isNew || numericGameId == null || Number.isNaN(numericGameId)) return;
 
         const t0 = Date.now();
         setLoading(true);
+        setSaveError(null);
         try {
             const res = await hostApi.getGame({ gameId: numericGameId });
             setLoaded(res.game);
@@ -62,6 +85,7 @@ export function useGameEditor(gameIdParam: string) {
             setDeletedQuestionIds([]);
             setDeletedTeamIds([]);
             setDeletedCategoryIds([]);
+            setIsDirty(false);
 
             setSelectedRoundKey(null);
             setSelectedQuestionKey(null);
@@ -73,13 +97,14 @@ export function useGameEditor(gameIdParam: string) {
                 response_time_ms: Date.now() - t0,
             });
         } catch (e: any) {
+            const message = e?.message ?? "Failed to load game. Please try again.";
+            setSaveError(message);
             void mixpanel.track("Host Editor Load Failed", {
                 game_id: numericGameId,
-                error_message: e?.message ?? String(e),
+                error_message: message,
                 status: e?.status,
                 response_time_ms: Date.now() - t0,
             });
-            throw e;
         } finally {
             setLoading(false);
         }
@@ -115,10 +140,17 @@ export function useGameEditor(gameIdParam: string) {
 
     function setTitle(v: string) {
         setDraft((d) => ({ ...d, title: v }));
+        setIsDirty(true);
+    }
+
+    function updateSettings(next: SaveGameRequest["game"]["settings"]) {
+        setDraft((d) => ({ ...d, settings: next }));
+        setIsDirty(true);
     }
 
     function setDate(v: string) {
         setDraft((d) => ({ ...d, date_of_event: v }));
+        setIsDirty(true);
         void mixpanel.track("Host Editor Date Changed", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -127,11 +159,13 @@ export function useGameEditor(gameIdParam: string) {
     }
 
     async function primaryAction() {
-        setSaveError(null);
         if (isNew) {
+            if (isSubmitting) return;
+            setSaveError(null);
             if (!draft.title.trim()) return;
             if (!draft.date_of_event.trim()) return;
 
+            setIsSubmitting(true);
             void mixpanel.track("Host Game Create Submitted");
             try {
                 const res = await hostApi.createGame({
@@ -147,11 +181,25 @@ export function useGameEditor(gameIdParam: string) {
                     error_message: message,
                     status: e?.status,
                 });
+            } finally {
+                setIsSubmitting(false);
             }
             return;
         }
 
-        if (!loaded) return;
+        await saveNow();
+    }
+
+    // The actual persist-to-server call for an existing game. Used by both
+    // the manual "Save all changes" button (via primaryAction) and the
+    // autosave debounce effect below.
+    async function saveNow() {
+        if (isNew || !loaded) return;
+
+        if (isSavingRef.current) {
+            pendingSaveRef.current = true;
+            return;
+        }
 
         const cleanDraft = {
             ...draft,
@@ -208,8 +256,13 @@ export function useGameEditor(gameIdParam: string) {
             deleted_teams_count: deletedTeamIds.length,
             deleted_categories_count: deletedCategoryIds.length,
         });
+        const draftSentInThisRequest = draft;
+
         setSaveError(null);
+        setIsSubmitting(true);
+        isSavingRef.current = true;
         const t0 = Date.now();
+        const generation = ++savingGenerationRef.current;
         try {
             const res = await hostApi.saveGame(body);
             void mixpanel.track("Host Game Saved Succeeded", {
@@ -219,12 +272,20 @@ export function useGameEditor(gameIdParam: string) {
             });
 
             setLoaded(res.game);
-            setDraft(toSaveGameDraft(res.game));
 
-            setDeletedRoundIds([]);
-            setDeletedQuestionIds([]);
-            setDeletedTeamIds([]);
-            setDeletedCategoryIds([]);
+            // Only replace the draft (and clear pending-deletion tracking)
+            // with the server's version if nothing changed locally while
+            // this request was in flight — otherwise we'd visibly stomp an
+            // edit, or forget a deletion, the user just made using the
+            // (now stale) response we started this request with.
+            if (draftRef.current === draftSentInThisRequest) {
+                setDraft(toSaveGameDraft(res.game));
+                setIsDirty(false);
+                setDeletedRoundIds([]);
+                setDeletedQuestionIds([]);
+                setDeletedTeamIds([]);
+                setDeletedCategoryIds([]);
+            }
         } catch (e: any) {
             const message = e?.message ?? "Failed to save. Please try again.";
             setSaveError(message);
@@ -234,8 +295,47 @@ export function useGameEditor(gameIdParam: string) {
                 status: e?.status,
                 response_time_ms: Date.now() - t0,
             });
+        } finally {
+            isSavingRef.current = false;
+
+            // Keep the "Saving…" indicator up for a minimum stretch so a
+            // fast save doesn't just flash on screen for a fraction of a
+            // second — but only if no newer save has started since.
+            const hideSavingIndicator = () => {
+                if (savingGenerationRef.current === generation) {
+                    setIsSubmitting(false);
+                }
+            };
+            const remaining = MIN_SAVING_INDICATOR_MS - (Date.now() - t0);
+            if (remaining > 0) {
+                setTimeout(hideSavingIndicator, remaining);
+            } else {
+                hideSavingIndicator();
+            }
+
+            if (pendingSaveRef.current) {
+                pendingSaveRef.current = false;
+                void saveNowRef.current();
+            }
         }
     }
+
+    useEffect(() => {
+        saveNowRef.current = saveNow;
+    });
+
+    // Autosave: after AUTOSAVE_DEBOUNCE_MS of no further edits, persist
+    // automatically. Only applies once a game exists — the initial create
+    // step still requires an explicit click (see saveHostGame's DRAFT-only
+    // edit lock and the deliberately-deferred "orphaned empty games" issue).
+    useEffect(() => {
+        if (isNew || !isDirty) return;
+        const timer = setTimeout(() => {
+            void saveNowRef.current();
+        }, AUTOSAVE_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [draft, isNew]);
 
     // ---- Categories ----
     function addCategory(name: string, description?: string) {
@@ -249,6 +349,7 @@ export function useGameEditor(gameIdParam: string) {
         };
 
         setDraft((d) => ({ ...d, categories: [...(d.categories as UICategory[]), next] }));
+        setIsDirty(true);
         void mixpanel.track("Host Editor Category Added", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -268,6 +369,7 @@ export function useGameEditor(gameIdParam: string) {
                     : c
             ),
         }));
+        setIsDirty(true);
         void mixpanel.track("Host Editor Category Updated", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -286,6 +388,7 @@ export function useGameEditor(gameIdParam: string) {
                 cat.id ? c.id !== cat.id : c._tmpId !== cat._tmpId
             ),
         }));
+        setIsDirty(true);
         void mixpanel.track("Host Editor Category Removed", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -307,6 +410,7 @@ export function useGameEditor(gameIdParam: string) {
             category_id: categoryId
         };
         setDraft((d) => ({ ...d, teams: [...(d.teams as UITeam[]), next] }));
+        setIsDirty(true);
         void mixpanel.track("Host Editor Team Added", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -328,6 +432,7 @@ export function useGameEditor(gameIdParam: string) {
                     : t
             ),
         }));
+        setIsDirty(true);
         const prevCategoryId = (team as any).category_id ?? (team as any).categoryId ?? null;
         void mixpanel.track("Host Editor Team Updated", {
             game_id: numericGameId ?? null,
@@ -347,6 +452,7 @@ export function useGameEditor(gameIdParam: string) {
             ...d,
             teams: (d.teams as UITeam[]).filter((t) => (team.id ? t.id !== team.id : t._tmpId !== team._tmpId)),
         }));
+        setIsDirty(true);
         void mixpanel.track("Host Editor Team Removed", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -369,6 +475,7 @@ export function useGameEditor(gameIdParam: string) {
         setDraft((d) => ({ ...d, rounds: [...(d.rounds as UIRound[]), r] }));
         setSelectedRoundKey(roundKey(r));
         setSelectedQuestionKey(null);
+        setIsDirty(true);
         void mixpanel.track("Host Editor Round Added", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -389,6 +496,7 @@ export function useGameEditor(gameIdParam: string) {
             setSelectedRoundKey(null);
             setSelectedQuestionKey(null);
         }
+        setIsDirty(true);
         void mixpanel.track("Host Editor Round Removed", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -428,6 +536,7 @@ export function useGameEditor(gameIdParam: string) {
         const updatedRound = next.find((r) => roundKey(r) === rk);
         const created = updatedRound?.questions?.[(updatedRound.questions as any[]).length - 1] as any;
         setSelectedQuestionKey(created ? questionKey(created) : null);
+        setIsDirty(true);
         void mixpanel.track("Host Editor Question Added", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -454,6 +563,7 @@ export function useGameEditor(gameIdParam: string) {
         setDraft((d) => ({ ...d, rounds: next }));
 
         if (selectedQuestionKey === qk) setSelectedQuestionKey(null);
+        setIsDirty(true);
         void mixpanel.track("Host Editor Question Removed", {
             game_id: numericGameId ?? null,
             is_new: isNew,
@@ -482,6 +592,7 @@ export function useGameEditor(gameIdParam: string) {
         });
 
         setDraft((d) => ({ ...d, rounds: next }));
+        setIsDirty(true);
     }
 
     function selectRound(k: string) {
@@ -505,6 +616,7 @@ export function useGameEditor(gameIdParam: string) {
                 roundKey(r) === rk ? { ...r, name } : r
             ),
         }));
+        setIsDirty(true);
     }
 
     function selectQuestion(k: string) {
@@ -528,6 +640,9 @@ export function useGameEditor(gameIdParam: string) {
         loaded,
         draft,
         saveError,
+        isDirty,
+        isSubmitting,
+        reload: load,
 
         selectedRoundKey,
         selectedQuestionKey,
@@ -539,6 +654,7 @@ export function useGameEditor(gameIdParam: string) {
         setDraft,
         setTitle,
         setDate,
+        updateSettings,
         primaryAction,
 
         addCategory,

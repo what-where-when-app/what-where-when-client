@@ -45,7 +45,8 @@
         "thinking": "Discussion time",
         "answering": "Time to answer",
         "preparation": "Attention, question...",
-        "idle": "Waiting..."
+        "idle": "Waiting...",
+        "paused": "Paused by host"
       }
     },
     "tabs": {
@@ -80,6 +81,7 @@
     "idleTitle": "Waiting for the host",
     "preparationSubtitle": "Attention, the question is being read...",
     "questionTitle": "Question {{n}}",
+    "paused": "The host paused the timer. Hang on...",
     "timerRunning": "{{seconds}} sec · {{hint}}",
     "hintThinking": "discuss with your team",
     "hintAnswering": "type your answer!",
@@ -159,11 +161,24 @@
     "loadError": "Could not load games.",
     "openGame": "Open"
   },
+  "playerNotifications": {
+    "genericError": "Something went wrong. Please try again.",
+    "connectionLost": "Connection lost. Reconnecting…",
+    "backOnline": "Back online"
+  },
+  "hostNotifications": {
+    "genericError": "Something went wrong. Please try again.",
+    "noMoreQuestions": "That was the last question. Tap \"Finish game\" to end it."
+  },
   "hostGameAdmin": {
     "createTitle": "Create game",
     "manageTitle": "Manage game",
     "save": "Save",
     "finishGame": "Finish game",
+    "unsavedChangesTitle": "Discard unsaved changes?",
+    "unsavedChangesBody": "You have unsaved changes. If you leave now, they'll be lost.",
+    "unsavedChangesCancel": "Keep editing",
+    "unsavedChangesDiscard": "Discard changes",
     "tabs": {
       "settings": "Settings",
       "answers": "Answers",
@@ -202,6 +217,9 @@
     "startGame": "Start game",
     "prev": "< Prev",
     "next": "Next >",
+    "startBlockedUnsaved": "Save your changes before starting the game.",
+    "startBlockedNoQuestions": "Add at least one question before starting the game.",
+    "startBlockedNoTeams": "Add at least one team before starting the game.",
     "startFirstQuestion": "Start first question",
     "timerStart": "Start timer",
     "finishQuestion": "Finish question",
@@ -209,7 +227,15 @@
   },
   "hostEditor": {
     "createGame": "Create game",
-    "saveAllChanges": "Save all changes"
+    "saveAllChanges": "Save all changes",
+    "lockedTitle": "This game has finished",
+    "lockedBody": "Finished games can no longer be edited, to keep the final results accurate.",
+    "liveEditNotice": "This game is live. You can still edit it, but a round or question that's already been played (or is currently active) can't be changed or deleted.",
+    "loadFailedTitle": "Couldn't load this game",
+    "loadFailedBody": "Something went wrong while loading. Please try again.",
+    "retry": "Retry",
+    "saveStatusSaving": "Saving…",
+    "saveStatusError": "Couldn't save — tap to retry"
   },
   "hostEditorCategories": {
     "title": "Categories",

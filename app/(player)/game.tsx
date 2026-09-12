@@ -8,6 +8,7 @@ import { colors } from '@/src/theme/colors';
 import { GameHeader } from '../../src/player/components/GameHeader';
 import { GameBottomTabs, TabType } from '../../src/player/components/GameBottomTabs';
 import { MiniGameWidget } from '../../src/player/components/MiniGameWidget';
+import { PlayerSnackbar } from '../../src/player/components/PlayerSnackbar';
 
 import { PlayTab } from '@/src/player/components/tabs/PlayTab';
 import { HistoryTab } from '@/src/player/components/tabs/HistoryTab';
@@ -69,13 +70,17 @@ export default function GameScreen() {
         gameStarted,
         phase,
         timer,
-        activeQuestionNumber,
+        activeQuestionId,
+        activeGlobalQuestionNumber,
         lastAnswerStatus,
         submitAnswer,
         history,
         leaderboard,
         participantId,
         finishedJoinBlocked,
+        isPaused,
+        notifications,
+        dismissNotification,
     } = usePlayerGame(
         gameId as string,
         teamId as string,
@@ -180,11 +185,13 @@ export default function GameScreen() {
                         timer={timer}
                         totalTime={phaseTotalTime}
                         history={history}
-                        questionNumber={activeQuestionNumber}
+                        activeQuestionId={activeQuestionId}
+                        questionNumber={activeGlobalQuestionNumber}
                         submitAnswer={submitAnswer}
                         lastAnswerStatus={lastAnswerStatus}
                         gameStatus={gameStatus}
                         participantId={participantId}
+                        isPaused={isPaused}
                     />
                 );
             case 'history':
@@ -206,6 +213,7 @@ export default function GameScreen() {
         (phase === GamePhase.THINKING || phase === GamePhase.ANSWERING);
 
     const getPhaseText = () => {
+        if (isPaused) return t('player.game.phase.paused');
         if (phase === GamePhase.THINKING) return t('player.game.phase.thinking');
         if (phase === GamePhase.ANSWERING) return t('player.game.phase.answering');
         if (phase === GamePhase.PREPARATION) return t('player.game.phase.preparation');
@@ -262,6 +270,11 @@ export default function GameScreen() {
                                 onTabChange={setActiveTab}
                             />
                         )}
+
+                        <PlayerSnackbar
+                            notifications={notifications}
+                            onDismiss={dismissNotification}
+                        />
 
                     </Box>
                 </Box>
