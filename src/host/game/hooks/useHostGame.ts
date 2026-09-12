@@ -252,6 +252,11 @@ export function useHostGame(gameId: number) {
         socket?.emit(AdminRequestEvent.JudgeAnswer, { gameId, answerId, verdict });
     }, [socket, gameId]);
 
+    const judgeAnswersBulk = useCallback((answerIds: number[], verdict: string) => {
+        void mixpanel.track("Host Answer Group Judged", { game_id: gameId, answer_ids: answerIds, count: answerIds.length, verdict });
+        socket?.emit(AdminRequestEvent.JudgeAnswersBulk, { gameId, answerIds, verdict });
+    }, [socket, gameId]);
+
     const stopQuestion = useCallback(() => {
         void mixpanel.track("Host Question Stopped", { game_id: gameId });
         socket?.emit(AdminRequestEvent.StopQuestion, { gameId });
@@ -281,6 +286,7 @@ export function useHostGame(gameId: number) {
         startTimer,
         stopTimer,
         judgeAnswer,
+        judgeAnswersBulk,
         adjustTime,
         notifications,
         dismissNotification

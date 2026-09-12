@@ -119,6 +119,9 @@ export interface AnswerDomain {
   status: AnswerStatus;
   submittedAt: string;
   lateBySeconds?: number;
+  groupKey: string;
+  matchesAccepted: boolean;
+  charactersOff: number | null;
 }
 
 export interface GameState {

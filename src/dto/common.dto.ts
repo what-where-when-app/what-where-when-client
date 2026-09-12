@@ -48,6 +48,7 @@ export enum AdminRequestEvent {
   StartQuestion = 'admin:start_question', // Triggers the start of a specific question cycle (THINKING phase, timer start)
   StopQuestion = 'admin:stop_question', // Stops ANSWERING phase (IDLE phase)
   JudgeAnswer = 'admin:judge_answer', // Submits host's verdict (correct/wrong) for a team's answer
+  JudgeAnswersBulk = 'admin:judge_answers_bulk', // Submits the same verdict for a batch of answers (e.g. a group of identical answers) in one round trip
   AdjustTime = 'admin:adjust_time', // Adds or subtracts seconds from the current active timer
   PauseTimer = 'admin:pause_timer', // Pauses the current question timer
   ResumeTimer = 'admin:resume_timer', // Resumes the current question timer
