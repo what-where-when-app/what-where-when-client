@@ -341,6 +341,7 @@
     "colAnswerText": "Answer",
     "empty": "No answers yet",
     "lateBy": "Late: {{seconds}} s",
+    "lateCount": "{{count}} late",
     "noAnswerText": "No answer text",
     "matchesAccepted": "Matches accepted answer",
     "charactersOff": "{{count}} character(s) off"

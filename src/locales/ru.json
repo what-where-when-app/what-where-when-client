@@ -341,6 +341,7 @@
     "colAnswerText": "Текст ответа",
     "empty": "Пока нет ответов от команд",
     "lateBy": "Опоздание: {{seconds}} с",
+    "lateCount": "Опоздавших: {{count}}",
     "noAnswerText": "Без текста ответа",
     "matchesAccepted": "Совпадает с принятым ответом",
     "charactersOff": "Отличие: {{count}} симв."

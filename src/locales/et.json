@@ -341,6 +341,7 @@
     "colAnswerText": "Vastus",
     "empty": "Vastuseid pole veel",
     "lateBy": "Hilines: {{seconds}} s",
+    "lateCount": "Hilinenuid: {{count}}",
     "noAnswerText": "Vastuse tekst puudub",
     "matchesAccepted": "Vastab õigele vastusele",
     "charactersOff": "Erinevus: {{count}} täht(e)"

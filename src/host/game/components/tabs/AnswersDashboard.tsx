@@ -26,7 +26,7 @@ interface AnswerGroup {
     status: 'unset' | 'correct' | 'incorrect' | 'mixed';
     matchesAccepted: boolean;
     charactersOff: number | null;
-    maxLateBySeconds: number | null;
+    lateCount: number;
 }
 
 export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, activeQuestionId, totalParticipants }: Props) => {
@@ -75,10 +75,7 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                 if (distance > 0 && distance <= 2) charactersOff = distance;
             }
 
-            const maxLateBySeconds = members.reduce<number | null>((max, m) => {
-                if (m.lateBySeconds == null) return max;
-                return max == null ? m.lateBySeconds : Math.max(max, m.lateBySeconds);
-            }, null);
+            const lateCount = members.filter(m => !!m.lateBySeconds).length;
 
             return {
                 key: `${members[0].questionId}-${normalized || members[0].id}`,
@@ -87,7 +84,7 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                 status,
                 matchesAccepted,
                 charactersOff,
-                maxLateBySeconds,
+                lateCount,
             };
         });
 
@@ -240,10 +237,10 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                                     </Box>
                                                 )}
 
-                                                {group.maxLateBySeconds ? (
+                                                {group.lateCount > 0 ? (
                                                     <Box style={[styles.badge, styles.badgeRed]}>
                                                         <Text style={[styles.badgeText, styles.badgeTextRed]}>
-                                                            {t("hostAnswersDashboard.lateBy", { seconds: group.maxLateBySeconds })}
+                                                            {t("hostAnswersDashboard.lateCount", { count: group.lateCount })}
                                                         </Text>
                                                     </Box>
                                                 ) : null}
@@ -251,9 +248,14 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
 
                                             <Box row style={{ gap: 8, flexWrap: 'wrap' }}>
                                                 {group.answers.map(a => (
-                                                    <Box key={a.id} style={styles.teamPill}>
+                                                    <Box key={a.id} style={[styles.teamPill, !!a.lateBySeconds && styles.teamPillLate]}>
                                                         <Text style={{ fontSize: 13, color: colors.neutralDark.medium }}>
                                                             {a.teamName}
+                                                            {!!a.lateBySeconds && (
+                                                                <Text style={{ fontSize: 11, color: colors.error.dark }}>
+                                                                    {'  '}{t("hostAnswersDashboard.lateBy", { seconds: a.lateBySeconds })}
+                                                                </Text>
+                                                            )}
                                                         </Text>
                                                     </Box>
                                                 ))}
@@ -326,6 +328,9 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         paddingVertical: 5,
         paddingHorizontal: 12,
+    },
+    teamPillLate: {
+        borderColor: colors.error.medium,
     },
     actionPill: {
         flexDirection: 'row',
