@@ -340,7 +340,11 @@
     "colTeamName": "Название команды",
     "colAnswerText": "Текст ответа",
     "empty": "Пока нет ответов от команд",
-    "lateBy": "Опоздание: {{seconds}} с"
+    "lateBy": "Опоздание: {{seconds}} с",
+    "addTeamButton": "+ Добавить ответ",
+    "addTeamPickerTitle": "Выберите команду для этого ответа",
+    "addTeamAlreadyAnswered": "уже ответила",
+    "addTeamEmpty": "В этой игре пока нет команд"
   },
   "hostForgotPassword": {
     "screenTitle": "Забыли пароль?",

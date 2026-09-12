@@ -340,7 +340,11 @@
     "colTeamName": "Võistkond",
     "colAnswerText": "Vastus",
     "empty": "Vastuseid pole veel",
-    "lateBy": "Hilines: {{seconds}} s"
+    "lateBy": "Hilines: {{seconds}} s",
+    "addTeamButton": "+ Lisa vastus",
+    "addTeamPickerTitle": "Vali võistkond, kellele vastus kuulub",
+    "addTeamAlreadyAnswered": "juba vastanud",
+    "addTeamEmpty": "Selles mängus pole veel võistkondi"
   },
   "hostForgotPassword": {
     "screenTitle": "Unustasid parooli?",
