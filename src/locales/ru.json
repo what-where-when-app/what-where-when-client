@@ -334,9 +334,9 @@
   "hostAnswersDashboard": {
     "roundFallback": "Раунд {{n}}",
     "selectQuestion": "Выберите вопрос слева",
-    "total": "Всего: {{count}}",
-    "correct": "Правильные: {{count}}",
-    "incorrect": "Неправильные: {{count}}",
+    "total": "Всего · {{count}}",
+    "correct": "Правильные · {{count}}",
+    "incorrect": "Неправильные · {{count}}",
     "colTeamName": "Название команды",
     "colAnswerText": "Текст ответа",
     "empty": "Пока нет ответов от команд",

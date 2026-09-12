@@ -334,9 +334,9 @@
   "hostAnswersDashboard": {
     "roundFallback": "Voor {{n}}",
     "selectQuestion": "Vali vasakult küsimus",
-    "total": "Kokku: {{count}}",
-    "correct": "Õiged: {{count}}",
-    "incorrect": "Valed: {{count}}",
+    "total": "Kokku · {{count}}",
+    "correct": "Õiged · {{count}}",
+    "incorrect": "Valed · {{count}}",
     "colTeamName": "Võistkond",
     "colAnswerText": "Vastus",
     "empty": "Vastuseid pole veel",

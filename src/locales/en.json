@@ -334,9 +334,9 @@
   "hostAnswersDashboard": {
     "roundFallback": "Round {{n}}",
     "selectQuestion": "Select a question on the left",
-    "total": "Total: {{count}}",
-    "correct": "Correct: {{count}}",
-    "incorrect": "Incorrect: {{count}}",
+    "total": "Total · {{count}}",
+    "correct": "Correct · {{count}}",
+    "incorrect": "Incorrect · {{count}}",
     "colTeamName": "Team",
     "colAnswerText": "Answer",
     "empty": "No answers yet",
