@@ -82,12 +82,15 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
             };
         });
 
+        // Ordered by how many teams wrote them, not by similarity to the
+        // accepted answer — "matches accepted" is just a badge that can
+        // land on any group, the biggest group is what needs judging most.
         result.sort((a, b) => {
-            if (a.matchesAccepted !== b.matchesAccepted) return a.matchesAccepted ? -1 : 1;
             const aJudged = a.status === 'correct' || a.status === 'incorrect';
             const bJudged = b.status === 'correct' || b.status === 'incorrect';
             if (aJudged !== bJudged) return aJudged ? 1 : -1;
-            return b.answers.length - a.answers.length;
+            if (b.answers.length !== a.answers.length) return b.answers.length - a.answers.length;
+            return a.matchesAccepted === b.matchesAccepted ? 0 : a.matchesAccepted ? -1 : 1;
         });
 
         return result;
@@ -303,20 +306,24 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                         groups.map((group, index) => {
                             const isCorrect = group.status === 'correct';
                             const isWrong = group.status === 'incorrect';
-                            const acceptFilled = isCorrect || (group.matchesAccepted && group.status === 'unset');
+                            // The biggest (unjudged) group gets the prominent
+                            // treatment — "matches accepted" is a separate
+                            // badge that can land on any group, big or small.
+                            const isTopGroup = index === 0;
+                            const acceptFilled = isCorrect || (isTopGroup && group.status === 'unset');
 
                             return (
                                 <Box
                                     key={group.key}
                                     style={[
                                         styles.groupCard,
-                                        group.matchesAccepted && styles.groupCardAccepted,
+                                        isTopGroup && styles.groupCardAccepted,
                                         (isCorrect || isWrong) && styles.groupCardJudged,
                                     ]}
                                 >
                                     <Box row align="center" style={{ gap: 18 }}>
-                                        <Box style={[styles.groupNumber, group.matchesAccepted && styles.groupNumberActive]}>
-                                            <Text style={{ fontWeight: '800', fontSize: 14, color: group.matchesAccepted ? '#fff' : colors.neutralDark.medium }}>
+                                        <Box style={[styles.groupNumber, isTopGroup && styles.groupNumberActive]}>
+                                            <Text style={{ fontWeight: '800', fontSize: 14, color: isTopGroup ? '#fff' : colors.neutralDark.medium }}>
                                                 {index + 1}
                                             </Text>
                                         </Box>
@@ -325,7 +332,7 @@ export const AnswersDashboard = ({ rounds, answers, onJudge, onJudgeBulk, active
                                             <Box row align="center" style={{ gap: 12, flexWrap: 'wrap' }}>
                                                 <Text style={{
                                                     fontWeight: '800',
-                                                    fontSize: group.matchesAccepted ? 24 : 20,
+                                                    fontSize: isTopGroup ? 24 : 20,
                                                     color: colors.neutralDark.darkest,
                                                 }}>
                                                     {group.displayText || t("hostAnswersDashboard.noAnswerText")}
