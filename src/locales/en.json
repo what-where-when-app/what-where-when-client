@@ -59,7 +59,8 @@
       "team": "Team: {{teamName}}",
       "error": "Error: {{message}}",
       "disconnected": "Connection lost...",
-      "sending": "Sending..."
+      "sending": "Sending...",
+      "queued": "Offline — will send automatically"
     },
     "miniWidget": {
       "line": "{{seconds}} sec · {{phase}}"
@@ -164,7 +165,9 @@
   "playerNotifications": {
     "genericError": "Something went wrong. Please try again.",
     "connectionLost": "Connection lost. Reconnecting…",
-    "backOnline": "Back online"
+    "backOnline": "Back online",
+    "answerQueued": "No connection — your answer will be sent as soon as you're back online.",
+    "answerNotDelivered": "Your answer couldn't be delivered before the question ended."
   },
   "hostNotifications": {
     "genericError": "Something went wrong. Please try again.",

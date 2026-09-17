@@ -50,6 +50,67 @@ export interface PlayerNotification {
 }
 
 const NOTIFICATION_TTL_MS = 4000;
+const ANSWER_ACK_TIMEOUT_MS = 6000;
+// A queued answer older than this is stale by any reasonable measure —
+// its question is long closed, so don't resurrect it on a later reload.
+const PENDING_ANSWER_MAX_AGE_MS = 10 * 60_000;
+
+interface PendingAnswer {
+    gameId: number;
+    participantId: number;
+    questionId: number;
+    answer: string;
+    submittedAt: string;
+}
+
+const PENDING_ANSWER_KEY = (gameId: string, teamId: string) =>
+    `www-player-pending-answer:${gameId}:${teamId}`;
+
+// Persisted so that reloading the page — the very thing a player does when
+// they see "connection lost" — doesn't silently throw away an answer they
+// already pressed Send on.
+function readStoredPendingAnswer(gameId: string, teamId: string): PendingAnswer | null {
+    try {
+        const g = globalThis as typeof globalThis & { sessionStorage?: Storage };
+        if (!g.sessionStorage) return null;
+        const raw = g.sessionStorage.getItem(PENDING_ANSWER_KEY(gameId, teamId));
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw) as Partial<PendingAnswer>;
+        if (
+            typeof parsed?.gameId !== 'number' ||
+            typeof parsed?.participantId !== 'number' ||
+            typeof parsed?.questionId !== 'number' ||
+            typeof parsed?.answer !== 'string' ||
+            typeof parsed?.submittedAt !== 'string'
+        ) {
+            return null;
+        }
+
+        const age = Date.now() - Date.parse(parsed.submittedAt);
+        if (!Number.isFinite(age) || age > PENDING_ANSWER_MAX_AGE_MS) return null;
+
+        return parsed as PendingAnswer;
+    } catch {
+        return null;
+    }
+}
+
+function persistPendingAnswer(
+    gameId: string,
+    teamId: string,
+    pending: PendingAnswer | null,
+) {
+    try {
+        const g = globalThis as typeof globalThis & { sessionStorage?: Storage };
+        if (!g.sessionStorage) return;
+        const key = PENDING_ANSWER_KEY(gameId, teamId);
+        if (pending) g.sessionStorage.setItem(key, JSON.stringify(pending));
+        else g.sessionStorage.removeItem(key);
+    } catch {
+        // private mode / unavailable
+    }
+}
 
 export function usePlayerGame(gameId: string, teamId: string, teamName: string) {
     const { t } = useTranslation();
@@ -61,8 +122,22 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
     const prevPhaseRef = useRef<GamePhase | null>(null);
     const prevStatusRef = useRef<GameStatus | null>(null);
     const prevActiveQuestionIdRef = useRef<number | null>(null);
+    const activeQuestionIdRef = useRef<number | null>(null);
     const wasDisconnectedRef = useRef(false);
     const notificationIdRef = useRef(0);
+    // An answer the player has sent that the server hasn't acknowledged yet.
+    // It's kept (and re-sent on reconnect / on watchdog tick) until the
+    // server either confirms it or rejects it, so pressing Send once is
+    // enough even if the connection drops at that exact moment.
+    const pendingAnswerRef = useRef<PendingAnswer | null>(null);
+    const pendingSubmitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Restored during the first render (not in an effect) so the socket's
+    // connect handler can never fire before we know an answer is queued.
+    const pendingRestoredRef = useRef(false);
+    if (!pendingRestoredRef.current) {
+        pendingRestoredRef.current = true;
+        pendingAnswerRef.current = readStoredPendingAnswer(gameId, teamId);
+    }
 
     const [status, setStatus] = useState(() => t("player.status.connecting"));
     const [participantId, setParticipantId] = useState<number | null>(null);
@@ -162,6 +237,62 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
         }));
     }, [trackStateTransitions]);
 
+    const clearPendingSubmit = useCallback(() => {
+        if (pendingSubmitTimerRef.current) {
+            clearTimeout(pendingSubmitTimerRef.current);
+            pendingSubmitTimerRef.current = null;
+        }
+        pendingAnswerRef.current = null;
+        persistPendingAnswer(gameId, teamId, null);
+    }, [gameId, teamId]);
+
+    // Re-sends the queued answer with its ORIGINAL submittedAt: the server
+    // derives lateness from that timestamp, so a resend caused by a dropped
+    // connection can never make the answer look later than it was. saveAnswer
+    // upserts per (participant, question), so a duplicate delivery is a no-op
+    // rather than a second answer.
+    const flushPendingAnswer = useCallback(() => {
+        const pending = pendingAnswerRef.current;
+        const s = socketRef.current;
+        if (!pending || !s?.connected) return;
+
+        // Send under the participant id this socket is actually bound to.
+        // After a reload we normally reclaim the same slot, but if we were
+        // given a new one, the id stored alongside the answer is stale and
+        // the server would reject it as someone else's participant.
+        const participantId = participantIdRef.current ?? pending.participantId;
+        s.emit(PlayerRequestEvent.SubmitAnswer, { ...pending, participantId });
+    }, []);
+
+    const armSubmitWatchdog = useCallback(() => {
+        if (pendingSubmitTimerRef.current) clearTimeout(pendingSubmitTimerRef.current);
+        pendingSubmitTimerRef.current = setTimeout(() => {
+            const pending = pendingAnswerRef.current;
+            if (!pending) return;
+
+            // The game moved past this question while we were still trying —
+            // the answer can no longer land, so stop and say so plainly
+            // instead of retrying forever against a closed question. A null
+            // active question means we simply haven't heard from the server
+            // yet (offline, or still syncing after a reload) — that's not
+            // evidence the question is gone, so keep trying.
+            const activeQuestionId = activeQuestionIdRef.current;
+            if (activeQuestionId != null && activeQuestionId !== pending.questionId) {
+                clearPendingSubmit();
+                setLastAnswerStatus('error');
+                pushNotification('error', t("playerNotifications.answerNotDelivered"));
+                void mixpanel.track("Player Answer Lost", {
+                    game_id: pending.gameId,
+                    question_id: pending.questionId,
+                });
+                return;
+            }
+
+            flushPendingAnswer();
+            armSubmitWatchdog();
+        }, ANSWER_ACK_TIMEOUT_MS);
+    }, [clearPendingSubmit, flushPendingAnswer, pushNotification, t]);
+
     const syncHistory = useCallback(() => {
         const id = participantIdRef.current;
         if (id) socketRef.current?.emit(PlayerRequestEvent.SyncHistory, { participantId: id });
@@ -215,6 +346,7 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
                 teamId: Number(teamId),
                 ...(knownParticipantId ? { participantId: knownParticipantId } : {}),
             });
+
         });
 
         s.on(GameBroadcastEvent.SyncState, (data: { state: GameState, participantId: number }) => {
@@ -240,6 +372,16 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
                 }
             }
             if (data.state) updateGameState(data.state);
+
+            // Deliver a queued answer here rather than on 'connect': the
+            // server checks that this socket owns the participant, and that
+            // binding only exists once JoinGame has been processed — which
+            // is exactly what receiving SyncState tells us. Covers both a
+            // reconnect and a fresh load after the player reloaded the page.
+            if (pendingAnswerRef.current) {
+                flushPendingAnswer();
+                armSubmitWatchdog();
+            }
         });
 
         s.on(GameBroadcastEvent.TimerUpdate, (state: GameState) => updateGameState(state));
@@ -289,6 +431,7 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
         });
 
         s.on(PlayerResponseEvent.AnswerReceived, () => {
+            clearPendingSubmit();
             setLastAnswerStatus('success');
             setStatus(t("player.status.team", { teamName }));
             const last = lastSubmitRef.current;
@@ -306,6 +449,7 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
         });
 
         s.on('error', (err: { message?: string }) => {
+            clearPendingSubmit();
             const msg = typeof err?.message === 'string' ? err.message : '';
             if (msg.includes('already finished')) {
                 setFinishedJoinBlocked(true);
@@ -335,6 +479,10 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
 
         return () => {
             cancelled = true;
+            if (pendingSubmitTimerRef.current) {
+                clearTimeout(pendingSubmitTimerRef.current);
+                pendingSubmitTimerRef.current = null;
+            }
             const s = socketRef.current ?? socket;
             if (s) {
                 s.disconnect();
@@ -362,9 +510,31 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
     }, [participantId, syncHistory, syncLeaderboard]);
 
     useEffect(() => {
+        activeQuestionIdRef.current = gameState.activeQuestionId;
+    }, [gameState.activeQuestionId]);
+
+    // An answer restored from a previous page load still needs a watchdog,
+    // so it gets delivered (or retired) even if this load never connects.
+    useEffect(() => {
+        if (!pendingAnswerRef.current) return;
+        setStatus(t("player.status.queued"));
+        armSubmitWatchdog();
+        void mixpanel.track("Player Answer Restored From Storage", {
+            game_id: Number(gameId),
+            question_id: pendingAnswerRef.current.questionId,
+        });
+        // Mount-only: later queueing is handled by submitAnswer itself.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
         if (gameState.phase === GamePhase.IDLE || gameState.phase === GamePhase.PREPARATION) {
             setLastAnswerStatus(null);
         }
+        // A queued answer is deliberately NOT dropped here: THINKING →
+        // ANSWERING is a phase change within the same question, and the
+        // answer is still perfectly deliverable. The watchdog retires it
+        // only once the active question itself has moved on.
     }, [gameState.phase, gameState.activeQuestionId]);
 
     const submitAnswer = useCallback((answerText: string) => {
@@ -378,7 +548,8 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
 
         if (canSubmit) {
             const submittedAt = new Date().toISOString();
-            lastSubmitRef.current = { submittedAtIso: submittedAt, questionId: gameState.activeQuestionId! };
+            const questionId = gameState.activeQuestionId!;
+            lastSubmitRef.current = { submittedAtIso: submittedAt, questionId };
 
             void mixpanel.track("Player Answer Submitted", {
                 game_id: Number(gameId),
@@ -390,16 +561,30 @@ export function usePlayerGame(gameId: string, teamId: string, teamName: string) 
                 time_left_s: gameState.timer,
                 answer_length: answerText?.length ?? 0,
             });
-            socketRef.current?.emit(PlayerRequestEvent.SubmitAnswer, {
+
+            const pending: PendingAnswer = {
                 gameId: Number(gameId),
                 participantId: id,
-                questionId: gameState.activeQuestionId,
+                questionId,
                 answer: answerText,
-                submittedAt
-            });
-            setStatus(t("player.status.sending"));
+                submittedAt,
+            };
+            pendingAnswerRef.current = pending;
+            persistPendingAnswer(gameId, teamId, pending);
+
+            const online = socketRef.current?.connected ?? false;
+            if (online) {
+                flushPendingAnswer();
+                setStatus(t("player.status.sending"));
+            } else {
+                // Queued rather than lost: the connect handler will deliver it
+                // as soon as the socket is back.
+                setStatus(t("player.status.queued"));
+                pushNotification('info', t("playerNotifications.answerQueued"));
+            }
+            armSubmitWatchdog();
         }
-    }, [gameId, teamId, gameState.phase, gameState.activeQuestionId, gameState.activeQuestionNumber, gameState.timer, t]);
+    }, [gameId, teamId, gameState.phase, gameState.activeQuestionId, gameState.activeQuestionNumber, gameState.timer, t, flushPendingAnswer, armSubmitWatchdog, pushNotification]);
 
     return {
         status,

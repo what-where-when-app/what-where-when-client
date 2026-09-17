@@ -59,7 +59,8 @@
       "team": "Команда: {{teamName}}",
       "error": "Ошибка: {{message}}",
       "disconnected": "Связь потеряна...",
-      "sending": "Отправка..."
+      "sending": "Отправка...",
+      "queued": "Нет связи — отправим автоматически"
     },
     "miniWidget": {
       "line": "{{seconds}} сек · {{phase}}"
@@ -164,7 +165,9 @@
   "playerNotifications": {
     "genericError": "Что-то пошло не так. Попробуйте ещё раз.",
     "connectionLost": "Связь потеряна. Переподключение…",
-    "backOnline": "Снова на связи"
+    "backOnline": "Снова на связи",
+    "answerQueued": "Нет связи — ответ отправится сам, как только связь вернётся.",
+    "answerNotDelivered": "Ответ не успел дойти до конца вопроса."
   },
   "hostNotifications": {
     "genericError": "Что-то пошло не так. Попробуйте ещё раз.",

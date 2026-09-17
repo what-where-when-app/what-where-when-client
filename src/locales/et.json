@@ -59,7 +59,8 @@
       "team": "Võistkond: {{teamName}}",
       "error": "Viga: {{message}}",
       "disconnected": "Ühendus katkes...",
-      "sending": "Saadan..."
+      "sending": "Saadan...",
+      "queued": "Ühendus puudub — saadame automaatselt"
     },
     "miniWidget": {
       "line": "{{seconds}} s · {{phase}}"
@@ -164,7 +165,9 @@
   "playerNotifications": {
     "genericError": "Midagi läks valesti. Palun proovi uuesti.",
     "connectionLost": "Ühendus katkes. Ühendan uuesti…",
-    "backOnline": "Uuesti ühendatud"
+    "backOnline": "Uuesti ühendatud",
+    "answerQueued": "Ühendus puudub — vastus saadetakse kohe, kui ühendus taastub.",
+    "answerNotDelivered": "Sinu vastus ei jõudnud kohale enne küsimuse lõppu."
   },
   "hostNotifications": {
     "genericError": "Midagi läks valesti. Palun proovi uuesti.",
